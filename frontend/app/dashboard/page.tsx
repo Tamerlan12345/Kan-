@@ -2,202 +2,195 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import Link from 'next/link'
 import { Plus } from 'lucide-react'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 
 interface Project {
   id: string
   name: string
   description: string
-  project_type: string
   status: string
+  project_type: string
 }
 
-export default function DashboardPage() {
-  const router = useRouter()
+export default function Dashboard() {
   const [projects, setProjects] = useState<Project[]>([])
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [isNewProjectOpen, setIsNewProjectOpen] = useState(false)
 
-  // New Project State
+  // New project state
   const [newProjectName, setNewProjectName] = useState('')
-  const [isCreateOpen, setIsCreateOpen] = useState(false)
+  const [newProjectDesc, setNewProjectDesc] = useState('')
+  const [newProjectType, setNewProjectType] = useState('development')
 
   useEffect(() => {
-    const checkUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        router.push('/login')
-        return
-      }
-      setUser(user)
-      fetchProjects()
-    }
-    checkUser()
-  }, [router])
+    fetchProjects()
+  }, [])
 
   const fetchProjects = async () => {
-    setLoading(true)
-    // In a real app we might filter by organization_id from user metadata or profile
-    const { data, error } = await supabase
-      .schema('app_projects')
-      .from('projects')
-      .select('*')
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .order('created_at', { ascending: false } as any)
+    try {
+      setLoading(true)
+      const { data: projectsData, error: projectsError } = await supabase
+        .schema('app_projects')
+        .from('projects')
+        .select('*')
+        .order('created_at', { ascending: false })
 
-    if (error) {
+      if (projectsError) throw projectsError
+
+      setProjects(projectsData || [])
+    } catch (error) {
       console.error('Error fetching projects:', error)
-    } else {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      setProjects(data as any || [])
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
-  const handleCreateProject = async () => {
-    if (!newProjectName) return
+  const createProject = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
 
-    // Need organization_id. For now, fetch from user's app_auth.users record
-    const { data: userData } = await supabase
+      // We need organization_id. For MVP let's see if we can get it or insert without it if nullable (it is not null in schema).
+      // We need to fetch the user's organization.
+      const { data: userData } = await supabase
         .schema('app_auth')
         .from('users')
         .select('organization_id')
         .eq('id', user.id)
         .single()
 
-    // Fallback or handle error. If no org, maybe create one?
-    // For this demo, assuming user has an org or we just insert with null if allowed (it is nullable in schema but logic might require it)
+      const orgId = userData?.organization_id
 
-    const { data, error } = await supabase
-      .schema('app_projects')
-      .from('projects')
-      .insert({
-        name: newProjectName,
-        organization_id: userData?.organization_id,
-        owner_id: user.id
-      })
-      .select()
+      const { data, error } = await supabase
+        .schema('app_projects')
+        .from('projects')
+        .insert([
+          {
+            name: newProjectName,
+            description: newProjectDesc,
+            project_type: newProjectType,
+            owner_id: user.id,
+            organization_id: orgId, // Might be null
+            status: 'active'
+          }
+        ])
+        .select()
 
-    if (error) {
+      if (error) throw error
+
+      setProjects([data[0], ...projects])
+      setIsNewProjectOpen(false)
+      setNewProjectName('')
+      setNewProjectDesc('')
+    } catch (error) {
       console.error('Error creating project:', error)
       alert('Error creating project')
-    } else {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      setProjects([data[0] as any, ...projects])
-      setIsCreateOpen(false)
-      setNewProjectName('')
     }
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <div className="mx-auto max-w-7xl">
-        <header className="mb-8 flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-            <p className="mt-2 text-gray-600">Welcome back, {user?.email}</p>
-          </div>
-          <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="mr-2 h-4 w-4" /> Create Project
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Create New Project</DialogTitle>
-                <DialogDescription>
-                  Start a new project board for your team.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="name" className="text-right">
-                    Name
-                  </Label>
-                  <Input
-                    id="name"
-                    value={newProjectName}
-                    onChange={(e) => setNewProjectName(e.target.value)}
-                    className="col-span-3"
-                  />
+    <div className="container mx-auto py-10">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Projects</h1>
+        <Dialog open={isNewProjectOpen} onOpenChange={setIsNewProjectOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="mr-2 h-4 w-4" /> New Project
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create New Project</DialogTitle>
+              <DialogDescription>
+                Add a new project to your workspace.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="name" className="text-right">
+                  Name
+                </Label>
+                <Input
+                  id="name"
+                  value={newProjectName}
+                  onChange={(e) => setNewProjectName(e.target.value)}
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="description" className="text-right">
+                  Description
+                </Label>
+                <Textarea
+                  id="description"
+                  value={newProjectDesc}
+                  onChange={(e) => setNewProjectDesc(e.target.value)}
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="type" className="text-right">
+                  Type
+                </Label>
+                 <select
+                    id="type"
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 col-span-3"
+                    value={newProjectType}
+                    onChange={(e) => setNewProjectType(e.target.value)}
+                  >
+                    <option value="development">Development</option>
+                    <option value="insurance">Insurance</option>
+                    <option value="analytics">Analytics</option>
+                    <option value="operations">Operations</option>
+                  </select>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button onClick={createProject}>Create Project</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {loading ? (
+        <div>Loading...</div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {projects.map((project) => (
+            <Link key={project.id} href={`/project/${project.id}`} className="block">
+              <div className="border rounded-lg p-6 hover:shadow-lg transition-shadow bg-card text-card-foreground">
+                <h3 className="text-xl font-semibold mb-2">{project.name}</h3>
+                <p className="text-muted-foreground mb-4 line-clamp-2">{project.description}</p>
+                <div className="flex justify-between items-center text-sm">
+                   <span className="bg-secondary px-2 py-1 rounded capitalize">{project.project_type}</span>
+                   <span className={`px-2 py-1 rounded capitalize ${project.status === 'active' ? 'text-green-600 bg-green-100' : 'text-gray-600 bg-gray-100'}`}>
+                     {project.status}
+                   </span>
                 </div>
               </div>
-              <DialogFooter>
-                <Button onClick={handleCreateProject}>Create</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </header>
-
-        {/* Analytics Widgets Placeholder */}
-        <section className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-3">
-          <Card>
-            <CardHeader>
-              <CardTitle>My Tasks</CardTitle>
-              <CardDescription>Tasks assigned to you</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">12</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>Team Velocity</CardTitle>
-              <CardDescription>Average points per sprint</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">24.5</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>Project Health</CardTitle>
-              <CardDescription>Overall status</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">Good</div>
-            </CardContent>
-          </Card>
-        </section>
-
-        <section>
-          <h2 className="mb-4 text-xl font-semibold text-gray-900">Projects</h2>
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {loading ? (
-              <p>Loading projects...</p>
-            ) : projects.length === 0 ? (
-               <p className="text-gray-500">No projects found. Create one to get started.</p>
-            ) : (
-              projects.map((project) => (
-                <Card
-                  key={project.id}
-                  className="cursor-pointer transition-shadow hover:shadow-lg"
-                  onClick={() => router.push(`/project/${project.id}`)}
-                >
-                  <CardHeader>
-                    <CardTitle>{project.name}</CardTitle>
-                    <CardDescription>{project.description || 'No description'}</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center justify-between text-sm text-gray-500">
-                      <span>{project.status}</span>
-                      <span>{project.project_type}</span>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
-            )}
-          </div>
-        </section>
-      </div>
+            </Link>
+          ))}
+          {projects.length === 0 && (
+             <div className="col-span-full text-center text-gray-500 py-10">
+                No projects found. Create one to get started.
+             </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }

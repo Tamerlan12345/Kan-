@@ -1,52 +1,48 @@
-import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { useDroppable } from "@dnd-kit/core";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { TaskCard } from "./TaskCard";
-import { Database } from "@/types/database.types";
-import { Button } from "./ui/button";
-import { Plus } from "lucide-react";
+import { useDroppable } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import TaskCard from './TaskCard';
 
-type Column = Database["app_projects"]["Tables"]["board_columns"]["Row"];
-type Task = Database["app_tasks"]["Tables"]["tasks"]["Row"];
-
-interface ColumnProps {
-  column: Column;
-  tasks: Task[];
-  onTaskClick: (task: Task) => void;
-  onAddTask: (columnId: string) => void;
+interface Task {
+  id: string;
+  title: string;
+  description: string;
+  priority: string;
+  column_id: string;
+  assigned_to?: string;
 }
 
-export function KanbanColumn({ column, tasks, onTaskClick, onAddTask }: ColumnProps) {
+interface KanbanColumnProps {
+  id: string;
+  title: string;
+  tasks: Task[];
+}
+
+export default function KanbanColumn({ id, title, tasks }: KanbanColumnProps) {
   const { setNodeRef } = useDroppable({
-    id: column.id,
-    data: {
-      type: "Column",
-      column,
-    },
+    id: id,
   });
 
   return (
-    <Card className="flex h-full w-80 flex-col shrink-0 bg-secondary/20 border-0">
-      <CardHeader className="p-4 flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-semibold text-foreground/70 uppercase tracking-wider">
-          {column.name} <span className="ml-2 text-muted-foreground font-normal">({tasks.length})</span>
-        </CardTitle>
-        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onAddTask(column.id)}>
-            <Plus className="h-4 w-4" />
-        </Button>
-      </CardHeader>
-      <CardContent className="flex-1 p-2">
-        <ScrollArea className="h-full pr-3">
-            <div ref={setNodeRef} className="flex flex-col gap-2 min-h-[150px]">
-              <SortableContext items={tasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
-                {tasks.map((task) => (
-                  <TaskCard key={task.id} task={task} onClick={onTaskClick} />
-                ))}
-              </SortableContext>
-            </div>
-        </ScrollArea>
-      </CardContent>
-    </Card>
+    <div className="flex h-full w-80 flex-col rounded-lg bg-gray-100 dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700">
+      <div className="p-4 font-semibold text-gray-700 dark:text-gray-200 flex justify-between items-center">
+        {title}
+        <span className="bg-gray-200 dark:bg-gray-700 px-2 py-0.5 rounded-full text-xs">
+          {tasks.length}
+        </span>
+      </div>
+
+      <div ref={setNodeRef} className="flex-1 overflow-y-auto p-2 space-y-2">
+        <SortableContext items={tasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
+          {tasks.map((task) => (
+            <TaskCard key={task.id} task={task} />
+          ))}
+        </SortableContext>
+        {tasks.length === 0 && (
+             <div className="h-20 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded flex items-center justify-center text-gray-400 text-sm">
+                Drop here
+             </div>
+        )}
+      </div>
+    </div>
   );
 }
