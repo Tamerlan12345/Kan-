@@ -60,7 +60,7 @@ serve(async (req) => {
         },
         {
           role: 'model',
-          parts: [{ text: 'Понял, готов помогать согласно моей роли.' }]
+          parts: [{ text: 'Ready to assist.' }]
         }
       ]
     })
@@ -84,7 +84,7 @@ serve(async (req) => {
       output_data: { response: responseText },
       user_id: userId,
       status: 'completed',
-      // We can grab tokens if available in usageMetadata, usually in result.response.usageMetadata
+      // We can grab tokens if available in usageMetadata
       tokens_used: result.response.usageMetadata?.totalTokenCount
     })
 

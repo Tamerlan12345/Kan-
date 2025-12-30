@@ -134,6 +134,11 @@ export function TaskModal({ task, onClose }: TaskModalProps) {
           console.error(error)
           alert("Failed to create subtasks")
       } else {
+          // Save decomposition result to original task
+          await supabase.schema('app_tasks').from('tasks').update({
+              ai_decomposition: proposedSubtasks
+          }).eq('id', task.id)
+
           setProposedSubtasks(null)
           alert("Subtasks created successfully!")
           // Invalidate tasks to show new subtasks (if we displayed them in modal or board)

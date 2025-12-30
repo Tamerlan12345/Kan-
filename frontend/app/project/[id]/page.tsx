@@ -16,6 +16,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { Sparkles } from 'lucide-react'
 
 export default function ProjectPage({ params }: { params: { id: string } }) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -29,6 +30,8 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
   const [taskTitle, setTaskTitle] = useState('')
   const [taskDesc, setTaskDesc] = useState('')
   const [taskPriority, setTaskPriority] = useState('P3')
+  const [predictedHours, setPredictedHours] = useState<string>('')
+  const [isEstimating, setIsEstimating] = useState(false)
   // We need to know which column to add to. Default to first column?
   const [firstColumnId, setFirstColumnId] = useState<string | null>(null)
 
@@ -105,6 +108,36 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
     }
   }
 
+  const estimateTask = async () => {
+      if (!taskTitle) return
+      setIsEstimating(true)
+      try {
+          const { data: { session } } = await supabase.auth.getSession()
+          const response = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/ai-assistant`, {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${session?.access_token}`
+              },
+              body: JSON.stringify({
+                  assistantType: 'predictive_estimator',
+                  input: JSON.stringify({ title: taskTitle, description: taskDesc })
+              })
+          })
+          const result = await response.json()
+          let jsonStr = result.response
+          jsonStr = jsonStr.replace(/```json\n?|\n?```/g, '')
+          const estimation = JSON.parse(jsonStr)
+          if (estimation.estimated_hours) {
+              setPredictedHours(estimation.estimated_hours.toString())
+          }
+      } catch (error) {
+          console.error("Estimation failed", error)
+      } finally {
+          setIsEstimating(false)
+      }
+  }
+
   const createTask = async () => {
       if (!board || !firstColumnId) return
 
@@ -124,7 +157,9 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
               priority: taskPriority,
               organization_id: orgId,
               created_by: user.id,
-              status: 'todo' // or map from column name
+              status: 'todo', // or map from column name
+              estimated_hours: predictedHours ? parseFloat(predictedHours) : null,
+              ai_predicted_hours: predictedHours ? parseFloat(predictedHours) : null
           })
 
           if (error) throw error
@@ -132,6 +167,7 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
           setIsTaskModalOpen(false)
           setTaskTitle('')
           setTaskDesc('')
+          setPredictedHours('')
           // Refresh board (cheap way) - ideally we update local state or use React Query
           window.location.reload()
 
@@ -168,6 +204,15 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
                     <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="desc" className="text-right">Description</Label>
                         <Textarea id="desc" value={taskDesc} onChange={e => setTaskDesc(e.target.value)} className="col-span-3"/>
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="est" className="text-right">Est. Hours</Label>
+                        <div className="col-span-3 flex gap-2">
+                            <Input id="est" type="number" value={predictedHours} onChange={e => setPredictedHours(e.target.value)} placeholder="0" />
+                            <Button size="icon" variant="outline" onClick={estimateTask} disabled={isEstimating} title="Predict with AI">
+                                {isEstimating ? <span className="animate-spin">...</span> : <Sparkles className="h-4 w-4" />}
+                            </Button>
+                        </div>
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="prio" className="text-right">Priority</Label>
