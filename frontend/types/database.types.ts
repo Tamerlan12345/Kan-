@@ -336,6 +336,54 @@ export interface Database {
       }
     }
   }
+  app_analytics: {
+    Tables: {
+      team_metrics: {
+        Row: {
+          id: string
+          organization_id: string | null
+          user_id: string | null
+          project_id: string | null
+          metric_date: string
+          tasks_completed: number | null
+          tasks_created: number | null
+          avg_completion_time: number | null
+          velocity_score: number | null
+          quality_score: number | null
+          collaboration_score: number | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          organization_id?: string | null
+          user_id?: string | null
+          project_id?: string | null
+          metric_date: string
+          tasks_completed?: number | null
+          tasks_created?: number | null
+          avg_completion_time?: number | null
+          velocity_score?: number | null
+          quality_score?: number | null
+          collaboration_score?: number | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          organization_id?: string | null
+          user_id?: string | null
+          project_id?: string | null
+          metric_date?: string
+          tasks_completed?: number | null
+          tasks_created?: number | null
+          avg_completion_time?: number | null
+          velocity_score?: number | null
+          quality_score?: number | null
+          collaboration_score?: number | null
+          created_at?: string | null
+        }
+      }
+    }
+  }
   app_ai: {
     Tables: {
       assistants: {
