@@ -1,0 +1,10 @@
+node_modules
+frontend/node_modules
+.next
+frontend/.next
+out
+frontend/out
+build
+frontend/build
+.DS_Store
+*.log

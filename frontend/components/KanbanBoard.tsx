@@ -10,14 +10,17 @@ import {
   useSensors,
   DragStartEvent,
   DragEndEvent,
+  DragOverEvent,
 } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { useState, useEffect } from 'react';
 import KanbanColumn from './KanbanColumn';
 import TaskCard from './TaskCard';
+import { KanbanBoardSkeleton } from '@/components/Skeletons';
 import { supabase } from '@/lib/supabase/client';
 import { Database } from '@/types/database.types';
-import { usePermission } from '@/hooks/usePermission';
+import { toast } from 'sonner';
+import { DICTIONARY, getStatusLabel } from '@/lib/dictionaries';
 
 // Extend Task with necessary fields
 type Task = Database['app_tasks']['Tables']['tasks']['Row'] & {
@@ -38,12 +41,13 @@ export default function KanbanBoard({ boardId }: KanbanBoardProps) {
   const [columns, setColumns] = useState<Column[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
-  const { canMoveTask } = usePermission();
+  const [loading, setLoading] = useState(true);
+
+  const canMoveTask = true;
 
   useEffect(() => {
     fetchBoardData();
 
-    // Subscribe to realtime updates
     const channel = supabase
         .channel('board_changes')
         .on(
@@ -56,18 +60,15 @@ export default function KanbanBoard({ boardId }: KanbanBoardProps) {
             },
             (payload) => {
                 if (payload.eventType === 'INSERT') {
-                     // Fetch user info for the new task if assigned_to is present
-                     // For simplicity, re-fetching the board or just adding it without user info initially
-                     // A better approach is to fetch the single user or check cache
                      const newTask = payload.new as Task;
                      setTasks(current => [...current, newTask]);
                 } else if (payload.eventType === 'UPDATE') {
                     setTasks(current => current.map(task => {
                         if (task.id === payload.new.id) {
-                            // Preserve assigned_to_user if assigned_to hasn't changed, otherwise we might need to fetch
                             const updatedTask = payload.new as Task;
-                            if (updatedTask.assigned_to === task.assigned_to) {
-                                return { ...updatedTask, assigned_to_user: task.assigned_to_user };
+                            const oldTask = current.find(t => t.id === task.id);
+                            if (oldTask && oldTask.assigned_to === updatedTask.assigned_to) {
+                                return { ...updatedTask, assigned_to_user: oldTask.assigned_to_user };
                             }
                             return updatedTask;
                         }
@@ -83,64 +84,69 @@ export default function KanbanBoard({ boardId }: KanbanBoardProps) {
     return () => {
         supabase.removeChannel(channel);
     };
-
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [boardId]);
 
   const fetchBoardData = async () => {
-      // Fetch Columns
-      const { data: cols, error: colsError } = await supabase
-        .schema('app_projects')
-        .from('board_columns')
-        .select('*')
-        .eq('board_id', boardId)
-        .order('position');
+      try {
+        setLoading(true);
+        const { data: cols, error: colsError } = await supabase
+            .schema('app_projects')
+            .from('board_columns')
+            .select('*')
+            .eq('board_id', boardId)
+            .order('position');
 
-      if (colsError) console.error(colsError);
-      else setColumns(cols || []);
+        if (colsError) throw colsError;
+        setColumns(cols || []);
 
-      // Fetch Tasks
-      const { data: t, error: tError } = await supabase
-        .schema('app_tasks')
-        .from('tasks')
-        .select('*')
-        .eq('board_id', boardId)
-        .order('weight');
+        const { data: t, error: tError } = await supabase
+            .schema('app_tasks')
+            .from('tasks')
+            .select('*')
+            .eq('board_id', boardId)
+            .order('weight');
 
-      if (tError) {
-          console.error(tError);
-      } else if (t) {
-          // Fetch users for tasks
-          const userIds = Array.from(new Set(t.map(task => task.assigned_to).filter(Boolean)));
+        if (tError) throw tError;
 
-          const usersMap: Record<string, Database['app_auth']['Tables']['users']['Row']> = {};
+        if (t) {
+            const userIds = Array.from(new Set(t.map(task => task.assigned_to).filter(Boolean)));
+            const usersMap: Record<string, Database['app_auth']['Tables']['users']['Row']> = {};
 
-          if (userIds.length > 0) {
-              const { data: users, error: uError } = await supabase
-                  .schema('app_auth')
-                  .from('users')
-                  .select('*')
-                  .in('id', userIds as string[]); // Cast to string[] as filter returns (string|null)[]
+            if (userIds.length > 0) {
+                const { data: users, error: uError } = await supabase
+                    .schema('app_auth')
+                    .from('users')
+                    .select('*')
+                    .in('id', userIds as string[]);
 
-              if (uError) console.error(uError);
-              else {
-                  users?.forEach(u => {
-                      usersMap[u.id] = u;
-                  });
-              }
-          }
+                if (uError) console.error(uError);
+                else {
+                    users?.forEach(u => { usersMap[u.id] = u; });
+                }
+            }
 
-          const tasksWithUsers = t.map(task => ({
-              ...task,
-              assigned_to_user: task.assigned_to ? usersMap[task.assigned_to] : undefined
-          }));
+            const tasksWithUsers = t.map(task => ({
+                ...task,
+                assigned_to_user: task.assigned_to ? usersMap[task.assigned_to] : undefined
+            }));
 
-          setTasks(tasksWithUsers);
+            setTasks(tasksWithUsers);
+        }
+      } catch (error) {
+        console.error("Error loading board:", error);
+        toast.error(DICTIONARY.errors.fetch_failed);
+      } finally {
+        setLoading(false);
       }
   };
 
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+        activationConstraint: {
+            distance: 5,
+        }
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
@@ -151,11 +157,11 @@ export default function KanbanBoard({ boardId }: KanbanBoardProps) {
     setActiveId(event.active.id as string);
   };
 
-  const handleDragOver = () => {
-    // For simple Kanban, drag over might not be strictly necessary to handle if we handle drag end correctly,
-    // but for smoother experience we can update local state here.
-    // However, dnd-kit logic for across containers is tricky.
-    // Let's implement DragEnd for DB updates first.
+  const handleDragOver = (event: DragOverEvent) => {
+    const { active, over } = event;
+    if (!over) return;
+    if (active.id === over.id) return;
+    // Keeping logic simple for now
   };
 
   const handleDragEnd = async (event: DragEndEvent) => {
@@ -163,53 +169,54 @@ export default function KanbanBoard({ boardId }: KanbanBoardProps) {
     const activeId = active.id as string;
     const overId = over?.id as string;
 
-    if (!overId) {
-       setActiveId(null);
-       return;
-    }
+    setActiveId(null);
 
-    // Find the task
+    if (!overId) return;
+
     const activeTask = tasks.find((t) => t.id === activeId);
     if (!activeTask) return;
 
-    // Find if over is a column or a task
     const overColumn = columns.find(c => c.id === overId);
     const overTask = tasks.find(t => t.id === overId);
 
     let newColumnId = activeTask.column_id;
+    // let newWeight = activeTask.weight; // Unused for now
 
-    // Case 1: Dropped over a column (empty area)
     if (overColumn) {
         newColumnId = overColumn.id;
-        // Determine position/weight - maybe append to end?
-        // Or if we need specific sorting, we need more logic.
-        // For now, let's just move it to the column.
-    }
-    // Case 2: Dropped over another task
-    else if (overTask) {
+    } else if (overTask) {
         newColumnId = overTask.column_id;
-        // We need to calculate new weight to place it relative to overTask.
-        // But for MVP, let's just update the column ID if it changed.
-        // If same column, we might want to reorder.
     }
 
-    // Optimistic Update
-    setTasks((tasks) => {
-        return tasks.map(t => {
-            if (t.id === activeId) {
-                return { ...t, column_id: newColumnId };
-            }
-            return t;
-        });
-    });
-
-    // DB Update
     if (newColumnId !== activeTask.column_id) {
-       await supabase.schema('app_tasks').from('tasks').update({ column_id: newColumnId }).eq('id', activeId);
-    }
+        // Optimistic Update
+        const previousTasks = [...tasks];
+        setTasks((current) => {
+            return current.map(t => {
+                if (t.id === activeId) {
+                    return { ...t, column_id: newColumnId };
+                }
+                return t;
+            });
+        });
 
-    setActiveId(null);
+        try {
+            const { error } = await supabase
+                .schema('app_tasks')
+                .from('tasks')
+                .update({ column_id: newColumnId, updated_at: new Date().toISOString() })
+                .eq('id', activeId);
+
+            if (error) throw error;
+        } catch (error) {
+            console.error("Failed to move task", error);
+            toast.error("Failed to move task");
+            setTasks(previousTasks); // Revert
+        }
+    }
   };
+
+  if (loading) return <KanbanBoardSkeleton />;
 
   return (
     <DndContext
@@ -219,14 +226,15 @@ export default function KanbanBoard({ boardId }: KanbanBoardProps) {
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
     >
-      <div className="flex h-full gap-4 overflow-x-auto pb-4">
+      <div className="flex h-full gap-4 overflow-x-auto pb-4 snap-x snap-mandatory">
         {columns.map((col) => (
-          <KanbanColumn
-            key={col.id}
-            id={col.id}
-            title={col.name}
-            tasks={tasks.filter((task) => task.column_id === col.id)}
-          />
+          <div key={col.id} className="snap-center">
+            <KanbanColumn
+                id={col.id}
+                title={getStatusLabel(col.name)}
+                tasks={tasks.filter((task) => task.column_id === col.id)}
+            />
+          </div>
         ))}
       </div>
       <DragOverlay>
