@@ -9,11 +9,13 @@ export function useUser() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let mounted = true;
+
     async function getUser() {
       try {
         const { data: { user } } = await supabase.auth.getUser();
 
-        if (user) {
+        if (user && mounted) {
           const { data, error } = await supabase
             .schema('app_auth')
             .from('users')
@@ -22,13 +24,16 @@ export function useUser() {
             .single();
 
           if (!error && data) {
-            setUserProfile(data);
+            if (mounted) setUserProfile(data);
+          } else {
+             // Retry logic or handling for missing profile (potentially not created by trigger yet)
+             console.log("User profile not found immediately, might be creating...");
           }
         }
       } catch (error) {
         console.error('Error fetching user:', error);
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     }
 
@@ -42,13 +47,14 @@ export function useUser() {
             .select('*')
             .eq('id', session.user.id)
             .single();
-         if (data) setUserProfile(data);
+         if (data && mounted) setUserProfile(data);
       } else {
-        setUserProfile(null);
+        if (mounted) setUserProfile(null);
       }
     });
 
     return () => {
+      mounted = false;
       subscription.unsubscribe();
     };
   }, []);

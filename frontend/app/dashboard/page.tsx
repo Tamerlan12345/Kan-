@@ -111,6 +111,11 @@ export default function Dashboard() {
 
       const orgId = userData?.organization_id
 
+      if (!orgId) {
+        toast.error("User profile incomplete. Please wait a moment or contact support.")
+        return
+      }
+
       const { data, error } = await supabase
         .schema('app_projects')
         .from('projects')
