@@ -1,28 +1,80 @@
 'use client'
 
-import React, { useState, useRef, useEffect } from 'react'
-import { MessageCircle, X, Send, Minimize2, Maximize2, Sparkles, Loader2 } from 'lucide-react'
+import React, { useState, useEffect } from 'react'
+import { MessageCircle, X, Send, Minimize2, Maximize2, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { supabase } from '@/lib/supabase/client'
+import { toast } from 'sonner'
+
+class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error("AI Widget Error:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+          <div className="fixed bottom-6 right-6 p-4 bg-red-100 border border-red-300 rounded shadow-lg text-red-800 text-sm">
+              AI Widget crashed. <button onClick={() => this.setState({ hasError: false })} className="underline">Reset</button>
+          </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+function TypingIndicator() {
+  return (
+    <div className="flex gap-1 items-center h-4">
+      <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+      <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+      <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"></span>
+    </div>
+  );
+}
 
 export function AiChatWidget() {
+  return (
+      <ErrorBoundary>
+          <AiChatWidgetContent />
+      </ErrorBoundary>
+  )
+}
+
+function AiChatWidgetContent() {
   const [isOpen, setIsOpen] = useState(false)
   const [isMinimized, setIsMinimized] = useState(false)
   const [input, setInput] = useState('')
   const [messages, setMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>([
-    { role: 'assistant', content: 'Hi! I am your project assistant. Ask me anything about the board or tasks.' }
+    { role: 'assistant', content: 'Привет! Я ваш AI ассистент. Спрашивайте о проектах и задачах.' }
   ])
   const [isLoading, setIsLoading] = useState(false)
-  const scrollRef = useRef<HTMLDivElement>(null)
+  // Removed viewportRef since we can't easily attach it to shadcn ScrollArea without modifying it
+  // and we have a fallback using last-message id
+
+  const scrollToBottom = () => {
+      // Fallback: use the id of the last message
+      const last = document.getElementById('last-message');
+      if (last) last.scrollIntoView({ behavior: 'smooth' });
+  }
 
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight
-    }
-  }, [messages])
+    // Small delay to allow DOM to update
+    const timeout = setTimeout(scrollToBottom, 100);
+    return () => clearTimeout(timeout);
+  }, [messages, isLoading, isOpen, isMinimized]);
 
   const handleSend = async () => {
     if (!input.trim()) return
@@ -34,10 +86,6 @@ export function AiChatWidget() {
 
     try {
       const { data: { session } } = await supabase.auth.getSession()
-
-      // Fetch context (e.g., current board summary? For now, we just pass the query)
-      // Ideally, we'd pass some project context ID if we are on a specific page.
-      // But this widget is global. Let's assume generic project questions or simple "help me plan".
 
       const response = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/ai-assistant`, {
         method: 'POST',
@@ -51,13 +99,30 @@ export function AiChatWidget() {
         })
       })
 
-      const result = await response.json()
-      if (result.error) throw new Error(result.error)
+      if (!response.ok) {
+          throw new Error(`Status: ${response.status}`);
+      }
 
-      setMessages(prev => [...prev, { role: 'assistant', content: result.response }])
+      const result = await response.json()
+
+      let aiResponse = "";
+      if (result.response) {
+          if (typeof result.response === 'string') {
+               aiResponse = result.response;
+          } else {
+               aiResponse = JSON.stringify(result.response);
+          }
+      } else if (result.error) {
+          throw new Error(result.error);
+      } else {
+          aiResponse = "Received empty response.";
+      }
+
+      setMessages(prev => [...prev, { role: 'assistant', content: aiResponse }])
     } catch (error) {
       console.error(error)
-      setMessages(prev => [...prev, { role: 'assistant', content: "I'm having trouble connecting right now." }])
+      setMessages(prev => [...prev, { role: 'assistant', content: "Извините, не удалось связаться с сервером." }])
+      toast.error("Ошибка AI ассистента");
     } finally {
       setIsLoading(false)
     }
@@ -66,7 +131,7 @@ export function AiChatWidget() {
   if (!isOpen) {
     return (
       <Button
-        className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg z-50"
+        className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg z-50 transition-transform hover:scale-110"
         onClick={() => setIsOpen(true)}
       >
         <MessageCircle className="h-6 w-6" />
@@ -75,8 +140,8 @@ export function AiChatWidget() {
   }
 
   return (
-    <div className={`fixed right-6 z-50 bg-background shadow-xl rounded-lg border transition-all duration-200 ease-in-out ${isMinimized ? 'bottom-6 h-14 w-72' : 'bottom-6 w-80 md:w-96 h-[500px]'}`}>
-      <div className="flex items-center justify-between p-3 border-b bg-primary text-primary-foreground rounded-t-lg cursor-pointer" onClick={() => !isMinimized && setIsMinimized(!isMinimized)}>
+    <div className={`fixed right-6 z-50 bg-background shadow-xl rounded-lg border transition-all duration-300 ease-in-out flex flex-col overflow-hidden ${isMinimized ? 'bottom-6 h-14 w-72' : 'bottom-6 w-[90vw] md:w-96 h-[80vh] md:h-[600px]'}`}>
+      <div className="flex items-center justify-between p-3 border-b bg-primary text-primary-foreground cursor-pointer shrink-0" onClick={() => !isMinimized && setIsMinimized(!isMinimized)}>
         <div className="flex items-center gap-2">
             <Sparkles className="h-4 w-4" />
             <span className="font-medium">AI Assistant</span>
@@ -92,37 +157,39 @@ export function AiChatWidget() {
       </div>
 
       {!isMinimized && (
-        <div className="flex flex-col h-[calc(100%-3rem)] bg-white dark:bg-slate-950">
-            <ScrollArea className="flex-1 p-4" ref={scrollRef}>
-                <div className="space-y-4">
+        <div className="flex flex-col flex-1 bg-background">
+            <ScrollArea className="flex-1 p-4">
+                <div className="space-y-4 pb-4">
                     {messages.map((m, i) => (
-                        <div key={i} className={`flex gap-2 ${m.role === 'user' ? 'flex-row-reverse' : ''}`}>
-                             <Avatar className="h-8 w-8">
-                                <AvatarFallback>{m.role === 'user' ? 'ME' : 'AI'}</AvatarFallback>
+                        <div key={i} id={i === messages.length - 1 ? "last-message" : undefined} className={`flex gap-2 ${m.role === 'user' ? 'flex-row-reverse' : ''}`}>
+                             <Avatar className="h-8 w-8 border border-border">
+                                <AvatarFallback className="text-xs">{m.role === 'user' ? 'Вы' : 'AI'}</AvatarFallback>
                              </Avatar>
-                             <div className={`rounded-lg p-3 text-sm max-w-[80%] ${m.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
+                             <div className={`rounded-lg p-3 text-sm max-w-[85%] break-words ${m.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground'}`}>
                                  {m.content}
                              </div>
                         </div>
                     ))}
                     {isLoading && (
                         <div className="flex gap-2">
-                            <Avatar className="h-8 w-8"><AvatarFallback>AI</AvatarFallback></Avatar>
-                            <div className="bg-muted rounded-lg p-3">
-                                <Loader2 className="h-4 w-4 animate-spin" />
+                            <Avatar className="h-8 w-8 border border-border"><AvatarFallback className="text-xs">AI</AvatarFallback></Avatar>
+                            <div className="bg-muted rounded-lg p-4 flex items-center">
+                                <TypingIndicator />
                             </div>
                         </div>
                     )}
                 </div>
             </ScrollArea>
-            <div className="p-3 border-t">
+            <div className="p-3 border-t bg-background shrink-0">
                 <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); handleSend(); }}>
                     <Input
                         value={input}
                         onChange={e => setInput(e.target.value)}
-                        placeholder="Type a message..."
+                        placeholder="Задайте вопрос..."
+                        className="flex-1"
+                        disabled={isLoading}
                     />
-                    <Button type="submit" size="icon" disabled={isLoading}>
+                    <Button type="submit" size="icon" disabled={isLoading || !input.trim()}>
                         <Send className="h-4 w-4" />
                     </Button>
                 </form>

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import Link from 'next/link'
-import { Plus } from 'lucide-react'
+import { Plus, FolderKanban } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -17,6 +17,20 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { ProjectListSkeleton } from '@/components/Skeletons'
+import { EmptyState } from '@/components/EmptyState'
+import { DICTIONARY, getStatusLabel } from '@/lib/dictionaries'
+import { useForm, Controller } from 'react-hook-form'
+import { z } from 'zod'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { toast } from 'sonner'
 
 interface Project {
   id: string
@@ -26,15 +40,34 @@ interface Project {
   project_type: string
 }
 
+const projectSchema = z.object({
+  name: z.string().min(3, { message: "Name must be at least 3 characters" }).max(50, { message: "Name must be less than 50 characters" }),
+  description: z.string().max(200, { message: "Description must be less than 200 characters" }).optional(),
+  type: z.string().min(1, { message: "Type is required" }),
+})
+
+type ProjectFormValues = z.infer<typeof projectSchema>
+
 export default function Dashboard() {
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
   const [isNewProjectOpen, setIsNewProjectOpen] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  // New project state
-  const [newProjectName, setNewProjectName] = useState('')
-  const [newProjectDesc, setNewProjectDesc] = useState('')
-  const [newProjectType, setNewProjectType] = useState('development')
+  const {
+    control,
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<ProjectFormValues>({
+    resolver: zodResolver(projectSchema),
+    defaultValues: {
+      name: '',
+      description: '',
+      type: 'development',
+    },
+  })
 
   useEffect(() => {
     fetchProjects()
@@ -54,18 +87,21 @@ export default function Dashboard() {
       setProjects(projectsData || [])
     } catch (error) {
       console.error('Error fetching projects:', error)
+      toast.error(DICTIONARY.errors.fetch_failed)
     } finally {
       setLoading(false)
     }
   }
 
-  const createProject = async () => {
+  const createProject = async (values: ProjectFormValues) => {
+    setIsSubmitting(true)
     try {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
+      if (!user) {
+        toast.error("User not authenticated")
+        return
+      }
 
-      // We need organization_id. For MVP let's see if we can get it or insert without it if nullable (it is not null in schema).
-      // We need to fetch the user's organization.
       const { data: userData } = await supabase
         .schema('app_auth')
         .from('users')
@@ -80,11 +116,11 @@ export default function Dashboard() {
         .from('projects')
         .insert([
           {
-            name: newProjectName,
-            description: newProjectDesc,
-            project_type: newProjectType,
+            name: values.name,
+            description: values.description,
+            project_type: values.type,
             owner_id: user.id,
-            organization_id: orgId, // Might be null
+            organization_id: orgId,
             status: 'active'
           }
         ])
@@ -94,102 +130,132 @@ export default function Dashboard() {
 
       setProjects([data[0], ...projects])
       setIsNewProjectOpen(false)
-      setNewProjectName('')
-      setNewProjectDesc('')
+      reset()
+      toast.success(DICTIONARY.common.success)
     } catch (error) {
       console.error('Error creating project:', error)
-      alert('Error creating project')
+      toast.error(DICTIONARY.errors.create_failed)
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
   return (
     <div className="container mx-auto py-10">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Projects</h1>
+        <h1 className="text-3xl font-bold">{DICTIONARY.projects.title}</h1>
         <Dialog open={isNewProjectOpen} onOpenChange={setIsNewProjectOpen}>
           <DialogTrigger asChild>
             <Button>
-              <Plus className="mr-2 h-4 w-4" /> New Project
+              <Plus className="mr-2 h-4 w-4" /> {DICTIONARY.projects.create_project}
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Create New Project</DialogTitle>
+              <DialogTitle>{DICTIONARY.projects.create_project}</DialogTitle>
               <DialogDescription>
                 Add a new project to your workspace.
               </DialogDescription>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
+            <form onSubmit={handleSubmit(createProject)} className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="name" className="text-right">
-                  Name
+                  {DICTIONARY.projects.name_placeholder}
                 </Label>
-                <Input
-                  id="name"
-                  value={newProjectName}
-                  onChange={(e) => setNewProjectName(e.target.value)}
-                  className="col-span-3"
-                />
+                <div className="col-span-3">
+                    <Input
+                    id="name"
+                    {...register("name")}
+                    className={errors.name ? "border-red-500" : ""}
+                    />
+                    {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>}
+                </div>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="description" className="text-right">
-                  Description
+                  {DICTIONARY.projects.desc_placeholder}
                 </Label>
-                <Textarea
-                  id="description"
-                  value={newProjectDesc}
-                  onChange={(e) => setNewProjectDesc(e.target.value)}
-                  className="col-span-3"
-                />
+                <div className="col-span-3">
+                    <Textarea
+                    id="description"
+                    {...register("description")}
+                    className={errors.description ? "border-red-500" : ""}
+                    />
+                    {errors.description && <p className="text-red-500 text-xs mt-1">{errors.description.message}</p>}
+                </div>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="type" className="text-right">
-                  Type
+                  {DICTIONARY.projects.type_label}
                 </Label>
-                 <select
-                    id="type"
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 col-span-3"
-                    value={newProjectType}
-                    onChange={(e) => setNewProjectType(e.target.value)}
-                  >
-                    <option value="development">Development</option>
-                    <option value="insurance">Insurance</option>
-                    <option value="analytics">Analytics</option>
-                    <option value="operations">Operations</option>
-                  </select>
+                <div className="col-span-3">
+                    <Controller
+                        name="type"
+                        control={control}
+                        render={({ field }) => (
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="development">{DICTIONARY.status.development}</SelectItem>
+                                <SelectItem value="insurance">{DICTIONARY.status.insurance}</SelectItem>
+                                <SelectItem value="analytics">{DICTIONARY.status.analytics}</SelectItem>
+                                <SelectItem value="operations">{DICTIONARY.status.operations}</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        )}
+                    />
+                     {errors.type && <p className="text-red-500 text-xs mt-1">{errors.type.message}</p>}
+                </div>
               </div>
-            </div>
-            <DialogFooter>
-              <Button onClick={createProject}>Create Project</Button>
-            </DialogFooter>
+              <DialogFooter>
+                <Button type="submit" disabled={isSubmitting}>
+                    {isSubmitting ? DICTIONARY.common.loading : DICTIONARY.common.create}
+                </Button>
+              </DialogFooter>
+            </form>
           </DialogContent>
         </Dialog>
       </div>
 
       {loading ? (
-        <div>Loading...</div>
+        <ProjectListSkeleton />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {projects.map((project) => (
-            <Link key={project.id} href={`/project/${project.id}`} className="block">
-              <div className="border rounded-lg p-6 hover:shadow-lg transition-shadow bg-card text-card-foreground">
-                <h3 className="text-xl font-semibold mb-2">{project.name}</h3>
-                <p className="text-muted-foreground mb-4 line-clamp-2">{project.description}</p>
-                <div className="flex justify-between items-center text-sm">
-                   <span className="bg-secondary px-2 py-1 rounded capitalize">{project.project_type}</span>
-                   <span className={`px-2 py-1 rounded capitalize ${project.status === 'active' ? 'text-green-600 bg-green-100' : 'text-gray-600 bg-gray-100'}`}>
-                     {project.status}
-                   </span>
+        <>
+            {projects.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {projects.map((project) => (
+                    <Link key={project.id} href={`/project/${project.id}`} className="block group">
+                    <div className="border rounded-lg p-6 hover:shadow-lg transition-all bg-card text-card-foreground group-hover:border-primary/50 h-full flex flex-col">
+                        <h3 className="text-xl font-semibold mb-2 group-hover:text-primary transition-colors">{project.name}</h3>
+                        <p className="text-muted-foreground mb-4 line-clamp-2 flex-grow">{project.description}</p>
+                        <div className="flex justify-between items-center text-sm mt-auto pt-4 border-t">
+                        <span className="bg-secondary px-2.5 py-0.5 rounded-full text-xs font-medium capitalize">
+                            {DICTIONARY.status[project.project_type as keyof typeof DICTIONARY.status] || project.project_type}
+                        </span>
+                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${
+                            project.status === 'active' ? 'text-green-700 bg-green-100' : 'text-gray-700 bg-gray-100'
+                        }`}>
+                            {getStatusLabel(project.status)}
+                        </span>
+                        </div>
+                    </div>
+                    </Link>
+                ))}
                 </div>
-              </div>
-            </Link>
-          ))}
-          {projects.length === 0 && (
-             <div className="col-span-full text-center text-gray-500 py-10">
-                No projects found. Create one to get started.
-             </div>
-          )}
-        </div>
+            ) : (
+                <EmptyState
+                    icon={FolderKanban}
+                    title={DICTIONARY.projects.no_projects}
+                    description="Create your first project to get started."
+                    action={{
+                        label: DICTIONARY.projects.create_first,
+                        onClick: () => setIsNewProjectOpen(true)
+                    }}
+                />
+            )}
+        </>
       )}
     </div>
   )
