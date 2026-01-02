@@ -5,7 +5,6 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Send, Loader2 } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { DICTIONARY } from '@/lib/dictionaries'
 import { toast } from 'sonner'
 import { Skeleton } from "@/components/ui/skeleton"
 
@@ -14,12 +13,7 @@ interface Message {
     content: string
     created_at: string
     user_id: string
-    // Allow for flexibility in how the joined user data is returned (alias 'user' or table name 'users')
     user?: {
-        full_name: string
-        avatar_url: string | null
-    } | null
-    users?: {
         full_name: string
         avatar_url: string | null
     } | null
@@ -49,32 +43,52 @@ export function TeamChat({ projectId, className }: TeamChatProps) {
     useEffect(() => {
         if (!projectId) return
 
+        let isMounted = true
+
         const fetchMessages = async () => {
             try {
-                // Modified query to try to resolve the relationship issue.
-                // Using 'users' which is the table name, assuming the FK is correctly set up.
-                // We use 'users' instead of alias 'user:user_id' to see if auto-detection works better.
-                const { data, error } = await supabase
+                // 1. Fetch messages without JOIN to avoid 400 error
+                const { data: msgs, error: msgError } = await supabase
                     .schema('app_projects')
                     .from('team_messages')
-                    .select(`
-                        *,
-                        users (
-                            full_name,
-                            avatar_url
-                        )
-                    `)
+                    .select('*')
                     .eq('project_id', projectId)
                     .order('created_at', { ascending: true })
 
-                if (error) throw error
-                setMessages(data as unknown as Message[])
+                if (msgError) throw msgError
+
+                if (!msgs || msgs.length === 0) {
+                    if (isMounted) setMessages([])
+                    return
+                }
+
+                // 2. Extract unique user IDs
+                const userIds = Array.from(new Set(msgs.map(m => m.user_id)))
+
+                // 3. Fetch user profiles separately
+                const { data: users, error: userError } = await supabase
+                    .schema('app_auth')
+                    .from('users')
+                    .select('id, full_name, avatar_url')
+                    .in('id', userIds)
+
+                if (userError) throw userError
+
+                const userMap = new Map(users?.map(u => [u.id, u]))
+
+                // 4. Combine data
+                const combinedMessages = msgs.map(m => ({
+                    ...m,
+                    user: userMap.get(m.user_id) || { full_name: 'Unknown', avatar_url: null }
+                }))
+
+                if (isMounted) setMessages(combinedMessages)
+
             } catch (error) {
                 console.error('Error fetching messages:', error)
-                // More friendly error message
                 toast.error("Не удалось загрузить чат")
             } finally {
-                setLoading(false)
+                if (isMounted) setLoading(false)
             }
         }
 
@@ -91,7 +105,7 @@ export function TeamChat({ projectId, className }: TeamChatProps) {
                     filter: `project_id=eq.${projectId}`
                 },
                 async (payload) => {
-                    // Fetch user details for the new message because realtime payload doesn't include joins
+                    // Fetch user details for the new message
                     const { data: userData } = await supabase
                         .schema('app_auth')
                         .from('users')
@@ -104,7 +118,7 @@ export function TeamChat({ projectId, className }: TeamChatProps) {
                         content: payload.new.content,
                         created_at: payload.new.created_at,
                         user_id: payload.new.user_id,
-                        users: userData ? { full_name: userData.full_name, avatar_url: userData.avatar_url } : null
+                        user: userData ? { full_name: userData.full_name, avatar_url: userData.avatar_url } : null
                     }
 
                     setMessages(prev => [...prev, newMsg])
@@ -113,6 +127,7 @@ export function TeamChat({ projectId, className }: TeamChatProps) {
             .subscribe()
 
         return () => {
+            isMounted = false
             supabase.removeChannel(channel)
         }
     }, [projectId])
@@ -121,7 +136,7 @@ export function TeamChat({ projectId, className }: TeamChatProps) {
         if (scrollRef.current) {
             scrollRef.current.scrollIntoView({ behavior: 'smooth' })
         }
-    }, [messages, loading]) // Auto scroll on load too
+    }, [messages, loading])
 
     const handleSendMessage = async () => {
         if (!newMessage.trim() || !currentUserId) return
@@ -176,12 +191,6 @@ export function TeamChat({ projectId, className }: TeamChatProps) {
                                 <Skeleton className="h-10 w-[150px] rounded-lg rounded-tr-none" />
                             </div>
                          </div>
-                         <div className="flex items-start gap-3">
-                            <Skeleton className="h-8 w-8 rounded-full" />
-                            <div className="space-y-2">
-                                <Skeleton className="h-16 w-[250px] rounded-lg rounded-tl-none" />
-                            </div>
-                         </div>
                     </div>
                 ) : messages.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-[200px] text-center text-sm text-muted-foreground">
@@ -192,8 +201,7 @@ export function TeamChat({ projectId, className }: TeamChatProps) {
                     <div className="space-y-4 pb-4">
                         {messages.map((msg) => {
                             const isMe = msg.user_id === currentUserId
-                            // Handle both potential structures (aliased 'user' or table 'users')
-                            const userInfo = msg.users || msg.user
+                            const userInfo = msg.user
                             const fullName = userInfo?.full_name || 'Unknown'
                             const avatarUrl = userInfo?.avatar_url
 
