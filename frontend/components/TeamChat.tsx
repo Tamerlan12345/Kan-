@@ -47,7 +47,6 @@ export function TeamChat({ projectId, className }: TeamChatProps) {
 
         const fetchMessages = async () => {
             try {
-                // 1. Fetch messages without JOIN to avoid 400 error
                 const { data: msgs, error: msgError } = await supabase
                     .schema('app_projects')
                     .from('team_messages')
@@ -62,10 +61,7 @@ export function TeamChat({ projectId, className }: TeamChatProps) {
                     return
                 }
 
-                // 2. Extract unique user IDs
                 const userIds = Array.from(new Set(msgs.map(m => m.user_id)))
-
-                // 3. Fetch user profiles separately
                 const { data: users, error: userError } = await supabase
                     .schema('app_auth')
                     .from('users')
@@ -76,7 +72,6 @@ export function TeamChat({ projectId, className }: TeamChatProps) {
 
                 const userMap = new Map(users?.map(u => [u.id, u]))
 
-                // 4. Combine data
                 const combinedMessages = msgs.map(m => ({
                     ...m,
                     user: userMap.get(m.user_id) || { full_name: 'Unknown', avatar_url: null }
@@ -105,7 +100,6 @@ export function TeamChat({ projectId, className }: TeamChatProps) {
                     filter: `project_id=eq.${projectId}`
                 },
                 async (payload) => {
-                    // Fetch user details for the new message
                     const { data: userData } = await supabase
                         .schema('app_auth')
                         .from('users')
@@ -153,11 +147,7 @@ export function TeamChat({ projectId, className }: TeamChatProps) {
                 })
 
             if (error) {
-                if (error.code === '42501' || error.message.includes('permission')) {
-                     toast.error("Нет прав для отправки сообщения")
-                } else {
-                     throw error
-                }
+                 throw error
             } else {
                 setNewMessage('')
             }
@@ -170,63 +160,64 @@ export function TeamChat({ projectId, className }: TeamChatProps) {
     }
 
     return (
-        <div className={`flex flex-col h-full bg-gray-50/30 ${className}`}>
-            <div className="p-4 border-b font-medium text-sm flex items-center justify-between bg-white/50 backdrop-blur-sm sticky top-0 z-10">
-                <span className="font-semibold text-gray-700">Командный чат</span>
-                <span className="text-xs text-muted-foreground bg-gray-100 px-2 py-0.5 rounded-full">{messages.length}</span>
+        <div className={`flex flex-col h-full bg-slate-50 ${className}`}>
+            <div className="p-4 border-b bg-white flex items-center justify-between sticky top-0 z-10 shadow-sm">
+                <span className="font-semibold text-slate-800">Командный чат</span>
             </div>
 
             <ScrollArea className="flex-1 p-4">
                 {loading ? (
-                    <div className="space-y-4 px-2">
-                         <div className="flex items-start gap-3">
-                            <Skeleton className="h-8 w-8 rounded-full" />
-                            <div className="space-y-2">
-                                <Skeleton className="h-10 w-[200px] rounded-lg rounded-tl-none" />
-                            </div>
-                         </div>
-                         <div className="flex items-start gap-3 flex-row-reverse">
-                            <Skeleton className="h-8 w-8 rounded-full" />
-                            <div className="space-y-2">
-                                <Skeleton className="h-10 w-[150px] rounded-lg rounded-tr-none" />
-                            </div>
-                         </div>
+                    <div className="space-y-6">
+                        {[1, 2, 3].map(i => (
+                             <div key={i} className={`flex items-start gap-3 ${i % 2 === 0 ? 'flex-row-reverse' : ''}`}>
+                                <Skeleton className="h-8 w-8 rounded-full" />
+                                <Skeleton className="h-10 w-24 rounded-2xl" />
+                             </div>
+                        ))}
                     </div>
                 ) : messages.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-[200px] text-center text-sm text-muted-foreground">
-                        <p>Нет сообщений.</p>
-                        <p className="text-xs mt-1 opacity-70">Будьте первым!</p>
+                    <div className="flex flex-col items-center justify-center h-full text-center text-sm text-muted-foreground opacity-50">
+                        <p>Здесь пока тихо...</p>
                     </div>
                 ) : (
-                    <div className="space-y-4 pb-4">
-                        {messages.map((msg) => {
+                    <div className="space-y-6 pb-4">
+                        {messages.map((msg, i) => {
                             const isMe = msg.user_id === currentUserId
                             const userInfo = msg.user
                             const fullName = userInfo?.full_name || 'Unknown'
                             const avatarUrl = userInfo?.avatar_url
 
+                            // Check if next message is from same user (to group bubbles)
+                            // const isNextSame = messages[i+1]?.user_id === msg.user_id
+
                             return (
                                 <div key={msg.id} className={`flex gap-3 group ${isMe ? 'flex-row-reverse' : ''}`}>
-                                    <Avatar className="h-8 w-8 mt-1 border border-gray-200">
+                                    <Avatar className="h-8 w-8 mt-auto border border-white shadow-sm">
                                         <AvatarImage src={avatarUrl || undefined} />
-                                        <AvatarFallback className="text-[10px] bg-gray-100 text-gray-500">
+                                        <AvatarFallback className="text-[9px] bg-slate-100 text-slate-500">
                                             {fullName.substring(0, 2).toUpperCase()}
                                         </AvatarFallback>
                                     </Avatar>
-                                    <div className={`flex flex-col max-w-[80%] ${isMe ? 'items-end' : 'items-start'}`}>
-                                        <div className="flex items-center gap-2 mb-1 px-1">
-                                            <span className="text-[10px] font-medium text-gray-500">
-                                                {isMe ? 'Вы' : fullName}
+                                    <div className={`flex flex-col max-w-[85%] ${isMe ? 'items-end' : 'items-start'}`}>
+                                        {!isMe && (
+                                            <span className="text-[10px] text-slate-400 ml-1 mb-1">
+                                                {fullName}, {new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                                             </span>
-                                            <span className="text-[10px] text-gray-400">
-                                                {new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                        )}
+                                        {isMe && (
+                                            <span className="text-[10px] text-slate-400 mr-1 mb-1">
+                                                You, {new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                                             </span>
-                                        </div>
-                                        <div className={`rounded-2xl px-4 py-2 text-sm shadow-sm ${
-                                            isMe
-                                            ? 'bg-blue-600 text-white rounded-tr-sm'
-                                            : 'bg-white border border-gray-100 text-gray-800 rounded-tl-sm'
-                                        }`}>
+                                        )}
+                                        <div
+                                            className={`
+                                                px-4 py-2 text-sm shadow-sm transition-all
+                                                ${isMe
+                                                    ? 'bg-indigo-600 text-white rounded-2xl rounded-tr-sm'
+                                                    : 'bg-white text-slate-800 border border-slate-100 rounded-2xl rounded-tl-sm'
+                                                }
+                                            `}
+                                        >
                                             {msg.content}
                                         </div>
                                     </div>
@@ -239,24 +230,30 @@ export function TeamChat({ projectId, className }: TeamChatProps) {
             </ScrollArea>
 
             <div className="p-3 border-t bg-white">
-                <div className="flex gap-2">
+                <form
+                    onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }}
+                    className="flex gap-2"
+                >
                     <Input
                         value={newMessage}
                         onChange={e => setNewMessage(e.target.value)}
-                        onKeyDown={e => e.key === 'Enter' && !sending && handleSendMessage()}
-                        placeholder="Напишите сообщение..."
-                        className="bg-gray-50 border-gray-200 focus-visible:ring-blue-500/20"
+                        placeholder="Сообщение..."
+                        className="bg-slate-50 border-slate-200 focus-visible:ring-indigo-500 rounded-full px-4"
                         disabled={sending}
                     />
                     <Button
+                        type="submit"
                         size="icon"
-                        onClick={handleSendMessage}
                         disabled={sending || !newMessage.trim()}
-                        className={sending ? 'opacity-70' : 'bg-blue-600 hover:bg-blue-700 text-white'}
+                        className={`rounded-full aspect-square h-10 w-10 shrink-0 transition-all ${
+                            sending || !newMessage.trim()
+                            ? 'bg-slate-100 text-slate-400 hover:bg-slate-100'
+                            : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-md hover:shadow-lg'
+                        }`}
                     >
-                        {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                        {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4 ml-0.5" />}
                     </Button>
-                </div>
+                </form>
             </div>
         </div>
     )

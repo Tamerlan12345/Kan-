@@ -1,0 +1,3 @@
+
+Wait, I need to install playwright dependencies if they are not there.
+But first let's see if the server starts.

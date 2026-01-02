@@ -1,0 +1,98 @@
+
+> frontend@0.1.0 dev
+> next dev
+
+ ⚠ Port 3000 is in use, trying 3001 instead.
+  ▲ Next.js 14.2.35
+  - Local:        http://localhost:3001
+
+ ✓ Starting...
+ ✓ Ready in 2.1s
+ ○ Compiling /middleware ...
+ ✓ Compiled /middleware in 1493ms (122 modules)
+ ⨯ Error: Your project's URL and Key are required to create a Supabase client!
+
+Check your Supabase project's API settings to find these values
+
+https://supabase.com/dashboard/project/_/settings/api
+    at <unknown> (https://supabase.com/dashboard/project/_/settings/api)
+    at createServerClient (webpack-internal:///(middleware)/./node_modules/@supabase/ssr/dist/module/createServerClient.js:15:15)
+    at Object.middleware [as handler] (webpack-internal:///(middleware)/./middleware.ts:16:87)
+    at eval (webpack-internal:///(middleware)/./node_modules/next/dist/esm/server/web/adapter.js:197:31)
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_hooks:91:14)
+    at Object.wrap (webpack-internal:///(middleware)/./node_modules/next/dist/esm/server/async-storage/request-async-storage-wrapper.js:105:24)
+    at eval (webpack-internal:///(middleware)/./node_modules/next/dist/esm/server/web/adapter.js:188:122)
+    at eval (webpack-internal:///(middleware)/./node_modules/next/dist/esm/server/lib/trace/tracer.js:115:36)
+    at NoopContextManager.with (webpack-internal:///(middleware)/./node_modules/next/dist/compiled/@opentelemetry/api/index.js:2:7062)
+    at ContextAPI.with (webpack-internal:///(middleware)/./node_modules/next/dist/compiled/@opentelemetry/api/index.js:2:518)
+    at NoopTracer.startActiveSpan (webpack-internal:///(middleware)/./node_modules/next/dist/compiled/@opentelemetry/api/index.js:2:18108)
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 2.2s (255 modules)
+ GET /login 404 in 10ms
+ ○ Compiling /_not-found ...
+<w> [webpack.cache.PackFileCacheStrategy] Serializing big strings (130kiB) impacts deserialization performance (consider using Buffer instead and decode when needed)
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⨯ Error: Your project's URL and Key are required to create a Supabase client!
+
+Check your Supabase project's API settings to find these values
+
+https://supabase.com/dashboard/project/_/settings/api
+    at <unknown> (https://supabase.com/dashboard/project/_/settings/api)
+    at createServerClient (webpack-internal:///(middleware)/./node_modules/@supabase/ssr/dist/module/createServerClient.js:15:15)
+    at Object.middleware [as handler] (webpack-internal:///(middleware)/./middleware.ts:16:87)
+    at eval (webpack-internal:///(middleware)/./node_modules/next/dist/esm/server/web/adapter.js:197:31)
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_hooks:91:14)
+    at Object.wrap (webpack-internal:///(middleware)/./node_modules/next/dist/esm/server/async-storage/request-async-storage-wrapper.js:105:24)
+    at eval (webpack-internal:///(middleware)/./node_modules/next/dist/esm/server/web/adapter.js:188:122)
+    at eval (webpack-internal:///(middleware)/./node_modules/next/dist/esm/server/lib/trace/tracer.js:115:36)
+    at NoopContextManager.with (webpack-internal:///(middleware)/./node_modules/next/dist/compiled/@opentelemetry/api/index.js:2:7062)
+    at ContextAPI.with (webpack-internal:///(middleware)/./node_modules/next/dist/compiled/@opentelemetry/api/index.js:2:518)
+    at NoopTracer.startActiveSpan (webpack-internal:///(middleware)/./node_modules/next/dist/compiled/@opentelemetry/api/index.js:2:18108)
+ ✓ Compiled /_not-found in 10.9s (881 modules)
+ ⨯ Error [ERR_HTTP_HEADERS_SENT]: Cannot append headers after they are sent to the client
+    at ServerResponse.appendHeader (node:_http_outgoing:756:11)
+digest: "605009736"
+ ⨯ Error: @supabase/ssr: Your project's URL and API key are required to create a Supabase client!
+
+Check your Supabase project's API settings to find these values
+
+https://supabase.com/dashboard/project/_/settings/api
+    at eval (./lib/supabase/client.ts:9:84)
+    at (ssr)/./lib/supabase/client.ts (/app/frontend/.next/server/app/_not-found/page.js:163:1)
+    at __webpack_require__ (/app/frontend/.next/server/webpack-runtime.js:33:42)
+    at eval (./components/AiChatWidget.tsx:19:78)
+    at (ssr)/./components/AiChatWidget.tsx (/app/frontend/.next/server/app/_not-found/page.js:97:1)
+    at Object.__webpack_require__ [as require] (/app/frontend/.next/server/webpack-runtime.js:33:42)
+digest: "2963480274"
+ ⨯ Error: Your project's URL and Key are required to create a Supabase client!
+
+Check your Supabase project's API settings to find these values
+
+https://supabase.com/dashboard/project/_/settings/api
+    at <unknown> (https://supabase.com/dashboard/project/_/settings/api)
+    at createServerClient (webpack-internal:///(middleware)/./node_modules/@supabase/ssr/dist/module/createServerClient.js:15:15)
+    at Object.middleware [as handler] (webpack-internal:///(middleware)/./middleware.ts:16:87)
+    at eval (webpack-internal:///(middleware)/./node_modules/next/dist/esm/server/web/adapter.js:197:31)
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_hooks:91:14)
+    at Object.wrap (webpack-internal:///(middleware)/./node_modules/next/dist/esm/server/async-storage/request-async-storage-wrapper.js:105:24)
+    at eval (webpack-internal:///(middleware)/./node_modules/next/dist/esm/server/web/adapter.js:188:122)
+    at eval (webpack-internal:///(middleware)/./node_modules/next/dist/esm/server/lib/trace/tracer.js:115:36)
+    at NoopContextManager.with (webpack-internal:///(middleware)/./node_modules/next/dist/compiled/@opentelemetry/api/index.js:2:7062)
+    at ContextAPI.with (webpack-internal:///(middleware)/./node_modules/next/dist/compiled/@opentelemetry/api/index.js:2:518)
+    at NoopTracer.startActiveSpan (webpack-internal:///(middleware)/./node_modules/next/dist/compiled/@opentelemetry/api/index.js:2:18108)
+ GET /login 404 in 2ms
+ ⨯ Error [ERR_HTTP_HEADERS_SENT]: Cannot append headers after they are sent to the client
+    at ServerResponse.appendHeader (node:_http_outgoing:756:11)
+digest: "605009736"
+ ⨯ Error: @supabase/ssr: Your project's URL and API key are required to create a Supabase client!
+
+Check your Supabase project's API settings to find these values
+
+https://supabase.com/dashboard/project/_/settings/api
+    at eval (./lib/supabase/client.ts:9:84)
+    at (ssr)/./lib/supabase/client.ts (/app/frontend/.next/server/app/_not-found/page.js:163:1)
+    at __webpack_require__ (/app/frontend/.next/server/webpack-runtime.js:33:42)
+    at eval (./components/AiChatWidget.tsx:19:78)
+    at (ssr)/./components/AiChatWidget.tsx (/app/frontend/.next/server/app/_not-found/page.js:97:1)
+    at Object.__webpack_require__ [as require] (/app/frontend/.next/server/webpack-runtime.js:33:42)
+digest: "2963480274"
