@@ -16,12 +16,11 @@ import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { useState, useEffect } from 'react';
 import KanbanColumn from './KanbanColumn';
 import TaskCard from './TaskCard';
-import { TaskModal } from './TaskModal'; // Import Modal
+import { TaskSheet } from './TaskSheet'; // Import Sheet instead of Modal
 import { supabase } from '@/lib/supabase/client';
 import { Database } from '@/types/database.types';
 import { toast } from 'sonner';
 import { DICTIONARY, getStatusLabel } from '@/lib/dictionaries';
-import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 // Extend Task with necessary fields
 type Task = Database['app_tasks']['Tables']['tasks']['Row'] & {
@@ -44,7 +43,7 @@ export default function KanbanBoard({ boardId }: KanbanBoardProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [loading, setLoading] = useState(true);
-  const [selectedTask, setSelectedTask] = useState<Task | null>(null); // For Modal
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
   const canMoveTask = true;
 
@@ -251,12 +250,11 @@ export default function KanbanBoard({ boardId }: KanbanBoardProps) {
         </DragOverlay>
         </DndContext>
 
-        {/* Task Detail Modal */}
-        <Dialog open={!!selectedTask} onOpenChange={(open) => !open && setSelectedTask(null)}>
-            <DialogContent className="max-w-4xl h-[90vh] p-0 overflow-hidden bg-white">
-                 {selectedTask && <TaskModal task={selectedTask} onClose={() => setSelectedTask(null)} />}
-            </DialogContent>
-        </Dialog>
+        <TaskSheet
+            task={selectedTask}
+            isOpen={!!selectedTask}
+            onClose={() => setSelectedTask(null)}
+        />
     </>
   );
 }
