@@ -8,6 +8,7 @@ import { Plus, Sparkles } from 'lucide-react'
 import {
     Dialog,
     DialogContent,
+    DialogDescription,
     DialogFooter,
     DialogHeader,
     DialogTitle,
@@ -196,45 +197,49 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
                         <Plus className="mr-2 h-4 w-4" /> New Task
                     </Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent className="sm:max-w-[600px]">
                     <DialogHeader>
-                        <DialogTitle>Create New Task</DialogTitle>
+                        <DialogTitle>Создать новую задачу</DialogTitle>
+                        <DialogDescription>
+                            Заполните параметры задачи. ИИ поможет оценить время.
+                        </DialogDescription>
                     </DialogHeader>
+
                     <div className="grid gap-4 py-4">
                         <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="title" className="text-right">Title</Label>
+                            <Label htmlFor="title" className="text-right">Название</Label>
                             <Input id="title" value={taskTitle} onChange={e => setTaskTitle(e.target.value)} className="col-span-3"/>
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="desc" className="text-right">Description</Label>
+                            <Label htmlFor="desc" className="text-right">Описание</Label>
                             <Textarea id="desc" value={taskDesc} onChange={e => setTaskDesc(e.target.value)} className="col-span-3"/>
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="est" className="text-right">Est. Hours</Label>
+                            <Label htmlFor="est" className="text-right">Часы (Est.)</Label>
                             <div className="col-span-3 flex gap-2">
                                 <Input id="est" type="number" value={predictedHours} onChange={e => setPredictedHours(e.target.value)} placeholder="0" />
-                                <Button size="icon" variant="outline" onClick={estimateTask} disabled={isEstimating} title="Predict with AI">
+                                <Button size="icon" variant="outline" onClick={estimateTask} disabled={isEstimating} title="Оценить с помощью ИИ">
                                     {isEstimating ? <span className="animate-spin">...</span> : <Sparkles className="h-4 w-4" />}
                                 </Button>
                             </div>
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="prio" className="text-right">Priority</Label>
+                            <Label htmlFor="prio" className="text-right">Приоритет</Label>
                             <select
                                 id="prio"
                                 value={taskPriority}
                                 onChange={e => setTaskPriority(e.target.value)}
                                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 col-span-3"
                             >
-                                <option value="P1">P1 - Critical</option>
-                                <option value="P2">P2 - High</option>
-                                <option value="P3">P3 - Medium</option>
-                                <option value="P4">P4 - Low</option>
+                                <option value="P1">P1 - Критический</option>
+                                <option value="P2">P2 - Высокий</option>
+                                <option value="P3">P3 - Средний</option>
+                                <option value="P4">P4 - Низкий</option>
                             </select>
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button onClick={createTask}>Create Task</Button>
+                        <Button onClick={createTask}>Создать задачу</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
