@@ -39,10 +39,10 @@
     --background: #020617; /* Slate-950 */
     --foreground: #f8fafc;
 
-    --card: #020617;
+    --card: #0f172a; /* Slate-900 */
     --card-foreground: #f8fafc;
 
-    --popover: #020617;
+    --popover: #0f172a; /* Slate-900 */
     --popover-foreground: #f8fafc;
 
     --primary: #f8fafc;
