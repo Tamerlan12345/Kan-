@@ -1,15 +1,15 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Database } from '@/types/database.types'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Send, Sparkles, X, Loader2 } from 'lucide-react'
+import { Send, Sparkles, X, Loader2, Plus, Trash2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
-import { useQueryClient } from '@tanstack/react-query'
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { usePermission } from '@/hooks/usePermission'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 type Task = Database['app_tasks']['Tables']['tasks']['Row']
 
@@ -25,21 +25,117 @@ interface ProposedSubtask {
     selected: boolean
 }
 
+interface Subtask {
+    id: string
+    title: string
+    is_completed: boolean
+    created_at: string
+}
+
 export function TaskModal({ task, onClose }: TaskModalProps) {
   const [chatInput, setChatInput] = useState('')
   const [messages, setMessages] = useState<{role: 'user' | 'assistant', content: string}[]>([])
   const [isAiLoading, setIsAiLoading] = useState(false)
-  const queryClient = useQueryClient()
   const { role } = usePermission()
 
+  // Subtasks/Checklist State
+  const [subtasks, setSubtasks] = useState<Subtask[]>([])
+  const [newSubtaskTitle, setNewSubtaskTitle] = useState('')
+  const [isSubtaskLoading, setIsSubtaskLoading] = useState(false)
+
   // Only Admin/Team Lead can use AI Decompose
-  // Role Hierarchy: observer(0), junior(1), middle(2), senior(3), team_lead(4), admin(5)
-  // "Admin/Team Lead: See all buttons (..., AI decomposition)"
   const canDecompose = role === 'admin' || role === 'team_lead'
 
   // Task Decomposition State
   const [isDecomposing, setIsDecomposing] = useState(false)
   const [proposedSubtasks, setProposedSubtasks] = useState<ProposedSubtask[] | null>(null)
+
+  useEffect(() => {
+      const fetchSubtasks = async () => {
+          const { data, error } = await supabase
+              .schema('app_tasks')
+              .from('subtasks')
+              .select('*')
+              .eq('task_id', task.id)
+              .order('created_at', { ascending: true })
+
+          if (error) {
+              console.error("Error fetching subtasks:", error)
+          } else {
+              setSubtasks(data)
+          }
+      }
+      fetchSubtasks()
+  }, [task.id])
+
+  const fetchSubtasksRefetch = async () => {
+      const { data, error } = await supabase
+          .schema('app_tasks')
+          .from('subtasks')
+          .select('*')
+          .eq('task_id', task.id)
+          .order('created_at', { ascending: true })
+
+      if (error) {
+          console.error("Error fetching subtasks:", error)
+      } else {
+          setSubtasks(data)
+      }
+  }
+
+  const handleAddSubtask = async () => {
+      if (!newSubtaskTitle.trim()) return
+      setIsSubtaskLoading(true)
+      const { data, error } = await supabase
+          .schema('app_tasks')
+          .from('subtasks')
+          .insert({
+              task_id: task.id,
+              title: newSubtaskTitle,
+              is_completed: false
+          })
+          .select()
+          .single()
+
+      if (error) {
+          console.error("Error adding subtask:", error)
+      } else {
+          setSubtasks([...subtasks, data])
+          setNewSubtaskTitle('')
+      }
+      setIsSubtaskLoading(false)
+  }
+
+  const handleToggleSubtask = async (id: string, isCompleted: boolean) => {
+      // Optimistic update
+      setSubtasks(subtasks.map(t => t.id === id ? { ...t, is_completed: isCompleted } : t))
+
+      const { error } = await supabase
+          .schema('app_tasks')
+          .from('subtasks')
+          .update({ is_completed: isCompleted })
+          .eq('id', id)
+
+      if (error) {
+          console.error("Error updating subtask:", error)
+          fetchSubtasksRefetch() // Revert on error
+      }
+  }
+
+  const handleDeleteSubtask = async (id: string) => {
+      setSubtasks(subtasks.filter(t => t.id !== id))
+
+      const { error } = await supabase
+          .schema('app_tasks')
+          .from('subtasks')
+          .delete()
+          .eq('id', id)
+
+      if (error) {
+          console.error("Error deleting subtask:", error)
+          fetchSubtasksRefetch() // Revert
+      }
+  }
 
   const handleSendMessage = async () => {
     if (!chatInput.trim()) return
@@ -71,7 +167,7 @@ export function TaskModal({ task, onClose }: TaskModalProps) {
 
     } catch (error) {
         console.error(error)
-        setMessages(prev => [...prev, { role: 'assistant', content: "Sorry, I encountered an error." }])
+        setMessages(prev => [...prev, { role: 'assistant', content: "Извините, произошла ошибка." }])
     } finally {
         setIsAiLoading(false)
     }
@@ -102,17 +198,16 @@ export function TaskModal({ task, onClose }: TaskModalProps) {
         let jsonStr = result.response
         jsonStr = jsonStr.replace(/```json\n?|\n?```/g, '')
 
-        const subtasks = JSON.parse(jsonStr)
+        const subtasksData = JSON.parse(jsonStr)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const tasksArray = Array.isArray(subtasks) ? subtasks : (subtasks.subtasks || [])
+        const tasksArray = Array.isArray(subtasksData) ? subtasksData : (subtasksData.subtasks || [])
 
-        // Add 'selected' property
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         setProposedSubtasks(tasksArray.map((t: any) => ({ ...t, selected: true })))
 
       } catch (error) {
           console.error("Decomposition error:", error)
-          alert("Failed to decompose task. AI might have returned invalid format.")
+          alert("Не удалось декомпозировать задачу. Возможно, ИИ вернул неверный формат.")
       } finally {
           setIsDecomposing(false)
       }
@@ -134,43 +229,34 @@ export function TaskModal({ task, onClose }: TaskModalProps) {
       const selectedTasks = proposedSubtasks.filter(t => t.selected)
       if (selectedTasks.length === 0) return
 
-      const { data: { user } } = await supabase.auth.getUser()
-
+      // Insert into subtasks table instead of creating new tasks
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const inserts = selectedTasks.map((st: any) => ({
-          board_id: task.board_id,
-          column_id: task.column_id,
-          organization_id: task.organization_id,
-          title: st.title,
-          description: st.description,
-          estimated_hours: st.estimated_hours,
-          parent_task_id: task.id,
-          created_by: user?.id,
-          status: 'todo',
-          weight: task.weight
+          task_id: task.id,
+          title: st.title, // Ignoring description/hours for simple checklist for now, or could append to title
+          is_completed: false
       }))
 
-      const { error } = await supabase.schema('app_tasks').from('tasks').insert(inserts)
+      const { error } = await supabase.schema('app_tasks').from('subtasks').insert(inserts)
+
       if (error) {
           console.error(error)
-          alert("Failed to create subtasks")
+          alert("Не удалось создать подзадачи")
       } else {
-          await supabase.schema('app_tasks').from('tasks').update({
-              ai_decomposition: proposedSubtasks // Save full history? or just what we did?
-          }).eq('id', task.id)
-
           setProposedSubtasks(null)
-          alert("Subtasks created successfully!")
-          queryClient.invalidateQueries({ queryKey: ['tasks', task.board_id] })
-          // Optionally close modal
-          // onClose()
+          fetchSubtasksRefetch()
+          alert("Подзадачи успешно созданы!")
       }
   }
+
+  const completedCount = subtasks.filter(t => t.is_completed).length
+  const totalCount = subtasks.length
+  const progress = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0
 
   return (
     <div className="flex h-full flex-col bg-white">
         <div className="flex items-center justify-between border-b px-6 py-4">
-            <h2 className="text-xl font-bold">{task.title}</h2>
+            <h2 className="text-xl font-bold line-clamp-1 break-all pr-4">{task.title}</h2>
             <Button variant="ghost" size="icon" onClick={onClose}><X className="h-4 w-4" /></Button>
         </div>
 
@@ -179,43 +265,104 @@ export function TaskModal({ task, onClose }: TaskModalProps) {
              <div className="flex-1 overflow-y-auto p-6 border-r">
                  <div className="mb-6 space-y-4">
                      <div>
-                         <h3 className="text-sm font-medium text-gray-500">Description</h3>
-                         <div className="mt-1 text-sm">{task.description || "No description provided."}</div>
+                         <h3 className="text-sm font-medium text-gray-500">Описание</h3>
+                         <div className="mt-1 text-sm whitespace-pre-wrap">{task.description || "Нет описания."}</div>
                      </div>
                      <div className="flex gap-4">
                          <div>
-                             <h3 className="text-sm font-medium text-gray-500">Status</h3>
+                             <h3 className="text-sm font-medium text-gray-500">Статус</h3>
                              <Badge variant="outline" className="mt-1 uppercase">{task.status}</Badge>
                          </div>
                          <div>
-                             <h3 className="text-sm font-medium text-gray-500">Priority</h3>
+                             <h3 className="text-sm font-medium text-gray-500">Приоритет</h3>
                              <Badge variant={task.priority === 'P1' ? 'destructive' : 'secondary'} className="mt-1">{task.priority}</Badge>
                          </div>
                      </div>
+                 </div>
+
+                 {/* Checklist Section */}
+                 <div className="mb-6">
+                    <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-sm font-semibold flex items-center gap-2">
+                            Чек-лист
+                            <span className="text-xs font-normal text-muted-foreground">({completedCount}/{totalCount})</span>
+                        </h3>
+                    </div>
+
+                    {totalCount > 0 && (
+                        <div className="w-full bg-secondary/30 h-2 rounded-full mb-4 overflow-hidden">
+                            <div className="bg-green-500 h-full transition-all duration-300" style={{ width: `${progress}%` }} />
+                        </div>
+                    )}
+
+                    <div className="space-y-2 mb-3">
+                        {subtasks.map(st => (
+                            <div key={st.id} className="flex items-start gap-3 group">
+                                <Checkbox
+                                    checked={st.is_completed}
+                                    onCheckedChange={(c) => handleToggleSubtask(st.id, !!c)}
+                                    className="mt-1"
+                                />
+                                <span className={`text-sm flex-1 break-words ${st.is_completed ? 'line-through text-muted-foreground' : ''}`}>
+                                    {st.title}
+                                </span>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                                    onClick={() => handleDeleteSubtask(st.id)}
+                                >
+                                    <Trash2 className="h-3 w-3 text-red-500" />
+                                </Button>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="flex gap-2">
+                        <Input
+                            value={newSubtaskTitle}
+                            onChange={e => setNewSubtaskTitle(e.target.value)}
+                            onKeyDown={e => e.key === 'Enter' && handleAddSubtask()}
+                            placeholder="Добавить элемент..."
+                            className="h-8 text-sm"
+                        />
+                        <Button size="sm" onClick={handleAddSubtask} disabled={!newSubtaskTitle.trim() || isSubtaskLoading}>
+                            {isSubtaskLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plus className="h-4 w-4" />}
+                        </Button>
+                    </div>
                  </div>
 
                  {/* AI Actions Area */}
                  {canDecompose && (
                     <div className="rounded-lg border bg-slate-50 p-4">
                         <h3 className="flex items-center text-sm font-semibold text-purple-700">
-                            <Sparkles className="mr-2 h-4 w-4" /> AI Assistant
+                            <Sparkles className="mr-2 h-4 w-4" /> AI Ассистент
                         </h3>
                         <div className="mt-3 flex gap-2">
-                            <Button
-                                variant="secondary"
-                                size="sm"
-                                onClick={handleDecomposeTask}
-                                disabled={isDecomposing}
-                            >
-                                {isDecomposing ? (
-                                    <>
-                                        <Loader2 className="mr-2 h-3 w-3 animate-spin" />
-                                        Thinking...
-                                    </>
-                                ) : (
-                                    "Decompose Task"
-                                )}
-                            </Button>
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button
+                                            variant="secondary"
+                                            size="sm"
+                                            onClick={handleDecomposeTask}
+                                            disabled={isDecomposing}
+                                        >
+                                            {isDecomposing ? (
+                                                <>
+                                                    <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                                                    Думаю...
+                                                </>
+                                            ) : (
+                                                "Декомпозировать задачу"
+                                            )}
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>Разбить задачу на подзадачи с помощью ИИ</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
                         </div>
 
                         {/* Skeleton Loading State (Visual) */}
@@ -230,7 +377,7 @@ export function TaskModal({ task, onClose }: TaskModalProps) {
                         {/* Proposed Subtasks UI */}
                         {proposedSubtasks && (
                             <div className="mt-4 rounded border bg-white p-3 shadow-sm">
-                                <h4 className="mb-2 text-sm font-medium">Proposed Subtasks</h4>
+                                <h4 className="mb-2 text-sm font-medium">Предложенные подзадачи</h4>
                                 <ul className="space-y-3">
                                     {proposedSubtasks.map((st, idx) => (
                                         <li key={idx} className="flex items-start gap-3 border-b pb-3 last:border-0 last:pb-0">
@@ -245,28 +392,14 @@ export function TaskModal({ task, onClose }: TaskModalProps) {
                                                     onChange={e => handleUpdateProposedTask(idx, 'title', e.target.value)}
                                                     className="h-8 text-sm font-medium"
                                                 />
-                                                <Input
-                                                    value={st.description}
-                                                    onChange={e => handleUpdateProposedTask(idx, 'description', e.target.value)}
-                                                    className="h-7 text-xs text-gray-500"
-                                                />
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-xs text-gray-500">Est. Hours:</span>
-                                                    <Input
-                                                        type="number"
-                                                        value={st.estimated_hours}
-                                                        onChange={e => handleUpdateProposedTask(idx, 'estimated_hours', parseFloat(e.target.value))}
-                                                        className="h-6 w-20 text-xs"
-                                                    />
-                                                </div>
                                             </div>
                                         </li>
                                     ))}
                                 </ul>
                                 <div className="mt-4 flex justify-end gap-2">
-                                    <Button variant="ghost" size="sm" onClick={() => setProposedSubtasks(null)}>Discard</Button>
+                                    <Button variant="ghost" size="sm" onClick={() => setProposedSubtasks(null)}>Отмена</Button>
                                     <Button size="sm" onClick={handleAcceptSubtasks}>
-                                        Create {proposedSubtasks.filter(t => t.selected).length} Tasks
+                                        Добавить {proposedSubtasks.filter(t => t.selected).length} в чек-лист
                                     </Button>
                                 </div>
                             </div>
@@ -277,13 +410,13 @@ export function TaskModal({ task, onClose }: TaskModalProps) {
 
              {/* Right Sidebar - Chat */}
              <div className="w-80 flex flex-col bg-gray-50 border-l">
-                 <div className="p-4 border-b font-medium text-sm">Comments & AI Chat</div>
+                 <div className="p-4 border-b font-medium text-sm">Комментарии и AI Чат</div>
                  <ScrollArea className="flex-1 p-4">
                      <div className="space-y-4">
                          {messages.map((m, i) => (
                              <div key={i} className={`flex gap-2 ${m.role === 'user' ? 'flex-row-reverse' : ''}`}>
                                  <Avatar className="h-6 w-6 mt-1">
-                                     <AvatarFallback>{m.role === 'user' ? 'ME' : 'AI'}</AvatarFallback>
+                                     <AvatarFallback>{m.role === 'user' ? 'Я' : 'AI'}</AvatarFallback>
                                  </Avatar>
                                  <div className={`rounded-lg p-3 text-sm max-w-[85%] ${m.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-white border shadow-sm'}`}>
                                      {m.content}
@@ -305,7 +438,7 @@ export function TaskModal({ task, onClose }: TaskModalProps) {
                          <Input
                             value={chatInput}
                             onChange={e => setChatInput(e.target.value)}
-                            placeholder="Ask AI..."
+                            placeholder="Спросить AI..."
                             className="text-sm"
                             onKeyDown={e => e.key === 'Enter' && handleSendMessage()}
                          />

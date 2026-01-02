@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import KanbanBoard from '@/components/KanbanBoard'
 import { Button } from '@/components/ui/button'
-import { Plus, Sparkles } from 'lucide-react'
+import { Plus, Sparkles, LogOut, MessageSquareText } from 'lucide-react'
 import {
     Dialog,
     DialogContent,
@@ -19,6 +19,8 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Breadcrumbs } from '@/components/Breadcrumbs'
 import { usePermission } from '@/hooks/usePermission'
+import { TeamChat } from '@/components/TeamChat'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 export default function ProjectPage({ params }: { params: { id: string } }) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -36,9 +38,12 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
   const [isEstimating, setIsEstimating] = useState(false)
   const [firstColumnId, setFirstColumnId] = useState<string | null>(null)
 
+  // Chat Sidebar State
+  const [isChatOpen, setIsChatOpen] = useState(false)
+
   const { role } = usePermission()
   // Admin/TeamLead/Senior can create tasks? Or everyone?
-  // Requirement: "Developer: View, move tasks..." (Implies edit/create usually, strict read-only is Observer)
+  // "Developer: View, move tasks..." (Implies edit/create usually, strict read-only is Observer)
   // "Observer: Read-only"
   const canCreateTask = role !== 'observer'
 
@@ -171,18 +176,30 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
       }
   }
 
-  if (loading) return <div>Loading...</div>
-  if (!project) return <div>Project not found</div>
+  const handleLogout = async () => {
+      await supabase.auth.signOut()
+      window.location.href = '/login'
+  }
+
+  if (loading) return <div className="p-8">Загрузка...</div>
+  if (!project) return <div className="p-8">Проект не найден</div>
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-background">
-      <div className="px-6 py-2 border-b bg-gray-50 dark:bg-zinc-900/50">
+      {/* Header */}
+      <div className="px-6 py-2 border-b bg-gray-50 dark:bg-zinc-900/50 flex justify-between items-center">
          <Breadcrumbs
             items={[
-                { label: 'My Projects', href: '/dashboard' },
+                { label: 'Мои проекты', href: '/dashboard' },
                 { label: project.name }
             ]}
          />
+         <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" onClick={handleLogout} className="text-muted-foreground hover:text-red-500">
+                <LogOut className="h-4 w-4 mr-2" />
+                Выйти
+            </Button>
+         </div>
       </div>
       <div className="flex items-center justify-between px-6 py-4 border-b bg-background shadow-sm">
         <div>
@@ -190,63 +207,86 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
            <p className="text-sm text-muted-foreground">{board?.name}</p>
         </div>
 
-        {canCreateTask && (
-            <Dialog open={isTaskModalOpen} onOpenChange={setIsTaskModalOpen}>
-                <DialogTrigger asChild>
-                    <Button>
-                        <Plus className="mr-2 h-4 w-4" /> New Task
-                    </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[600px]">
-                    <DialogHeader>
-                        <DialogTitle>Создать новую задачу</DialogTitle>
-                        <DialogDescription>
-                            Заполните параметры задачи. ИИ поможет оценить время.
-                        </DialogDescription>
-                    </DialogHeader>
+        <div className="flex items-center gap-2">
+            <TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button variant="outline" size="icon" onClick={() => setIsChatOpen(!isChatOpen)}>
+                            <MessageSquareText className="h-4 w-4" />
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p>{isChatOpen ? 'Скрыть чат команды' : 'Открыть чат команды'}</p>
+                    </TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
 
-                    <div className="grid gap-4 py-4">
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="title" className="text-right">Название</Label>
-                            <Input id="title" value={taskTitle} onChange={e => setTaskTitle(e.target.value)} className="col-span-3"/>
-                        </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="desc" className="text-right">Описание</Label>
-                            <Textarea id="desc" value={taskDesc} onChange={e => setTaskDesc(e.target.value)} className="col-span-3"/>
-                        </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="est" className="text-right">Часы (Est.)</Label>
-                            <div className="col-span-3 flex gap-2">
-                                <Input id="est" type="number" value={predictedHours} onChange={e => setPredictedHours(e.target.value)} placeholder="0" />
-                                <Button size="icon" variant="outline" onClick={estimateTask} disabled={isEstimating} title="Оценить с помощью ИИ">
-                                    {isEstimating ? <span className="animate-spin">...</span> : <Sparkles className="h-4 w-4" />}
-                                </Button>
+            {canCreateTask && (
+                <Dialog open={isTaskModalOpen} onOpenChange={setIsTaskModalOpen}>
+                    <DialogTrigger asChild>
+                        <Button>
+                            <Plus className="mr-2 h-4 w-4" /> Новая задача
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[600px]">
+                        <DialogHeader>
+                            <DialogTitle>Создать новую задачу</DialogTitle>
+                            <DialogDescription>
+                                Заполните параметры задачи. ИИ поможет оценить время.
+                            </DialogDescription>
+                        </DialogHeader>
+
+                        <div className="grid gap-4 py-4">
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="title" className="text-right">Название</Label>
+                                <Input id="title" value={taskTitle} onChange={e => setTaskTitle(e.target.value)} className="col-span-3"/>
+                            </div>
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="desc" className="text-right">Описание</Label>
+                                <Textarea id="desc" value={taskDesc} onChange={e => setTaskDesc(e.target.value)} className="col-span-3"/>
+                            </div>
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="est" className="text-right">Часы (Est.)</Label>
+                                <div className="col-span-3 flex gap-2">
+                                    <Input id="est" type="number" value={predictedHours} onChange={e => setPredictedHours(e.target.value)} placeholder="0" />
+                                    <Button size="icon" variant="outline" onClick={estimateTask} disabled={isEstimating} title="Оценить с помощью ИИ">
+                                        {isEstimating ? <span className="animate-spin">...</span> : <Sparkles className="h-4 w-4" />}
+                                    </Button>
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="prio" className="text-right">Приоритет</Label>
+                                <select
+                                    id="prio"
+                                    value={taskPriority}
+                                    onChange={e => setTaskPriority(e.target.value)}
+                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 col-span-3"
+                                >
+                                    <option value="P1">P1 - Критический</option>
+                                    <option value="P2">P2 - Высокий</option>
+                                    <option value="P3">P3 - Средний</option>
+                                    <option value="P4">P4 - Низкий</option>
+                                </select>
                             </div>
                         </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="prio" className="text-right">Приоритет</Label>
-                            <select
-                                id="prio"
-                                value={taskPriority}
-                                onChange={e => setTaskPriority(e.target.value)}
-                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 col-span-3"
-                            >
-                                <option value="P1">P1 - Критический</option>
-                                <option value="P2">P2 - Высокий</option>
-                                <option value="P3">P3 - Средний</option>
-                                <option value="P4">P4 - Низкий</option>
-                            </select>
-                        </div>
-                    </div>
-                    <DialogFooter>
-                        <Button onClick={createTask}>Создать задачу</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-        )}
+                        <DialogFooter>
+                            <Button onClick={createTask}>Создать задачу</Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+            )}
+        </div>
       </div>
-      <div className="flex-1 overflow-x-auto overflow-y-hidden p-6 bg-gray-50 dark:bg-gray-950">
-        {board && <KanbanBoard boardId={board.id} />}
+
+      <div className="flex flex-1 overflow-hidden">
+        <div className="flex-1 overflow-x-auto overflow-y-hidden p-6 bg-gray-50 dark:bg-gray-950">
+            {board && <KanbanBoard boardId={board.id} />}
+        </div>
+
+        {/* Chat Sidebar */}
+        <div className={`border-l bg-white transition-all duration-300 ease-in-out ${isChatOpen ? 'w-80' : 'w-0 overflow-hidden'}`}>
+             {project && <TeamChat projectId={project.id} className="h-full" />}
+        </div>
       </div>
     </div>
   )
