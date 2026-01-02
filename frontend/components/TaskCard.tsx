@@ -2,6 +2,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Database } from '@/types/database.types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 type Task = Database['app_tasks']['Tables']['tasks']['Row'] & {
     assigned_to_user?: Database['app_auth']['Tables']['users']['Row']
@@ -9,9 +10,10 @@ type Task = Database['app_tasks']['Tables']['tasks']['Row'] & {
 
 interface TaskCardProps {
   task: Task;
+  onClick?: () => void;
 }
 
-export default function TaskCard({ task }: TaskCardProps) {
+export default function TaskCard({ task, onClick }: TaskCardProps) {
   const {
     attributes,
     listeners,
@@ -43,6 +45,7 @@ export default function TaskCard({ task }: TaskCardProps) {
       style={style}
       {...attributes}
       {...listeners}
+      onClick={onClick}
       className="group relative cursor-grab active:cursor-grabbing rounded-lg bg-card p-4 shadow-sm hover:shadow-md transition-all border border-border/50 overflow-hidden"
     >
       {/* Priority Strip */}
@@ -51,7 +54,7 @@ export default function TaskCard({ task }: TaskCardProps) {
       <div className="pl-2 space-y-3">
         {/* Header: Title and Priority Badge */}
         <div className="flex justify-between items-start gap-2">
-          <h4 className="font-medium text-sm text-card-foreground leading-snug">{task.title}</h4>
+          <h4 className="font-medium text-sm text-card-foreground leading-snug break-words line-clamp-2">{task.title}</h4>
         </div>
 
         {/* Tags */}
@@ -68,17 +71,26 @@ export default function TaskCard({ task }: TaskCardProps) {
             <div className="flex flex-col gap-1 text-xs">
                  {task.due_date && (
                      <div className={`text-muted-foreground ${new Date(task.due_date) < new Date() ? 'text-red-500 font-medium' : ''}`}>
-                         {new Date(task.due_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                         {new Date(task.due_date).toLocaleDateString("ru-RU", { month: 'short', day: 'numeric' })}
                      </div>
                  )}
                  {/* Risk Warning / Time */}
                  <div className="flex items-center">
                     {isRisk ? (
-                        <span className="text-red-600 font-bold flex items-center gap-1" title={`Risk! Predicted: ${task.ai_predicted_hours}h`}>
-                            ⚠️ {task.estimated_hours}h
-                        </span>
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger>
+                                    <span className="text-red-600 font-bold flex items-center gap-1 cursor-help">
+                                        ⚠️ {task.estimated_hours}ч
+                                    </span>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>Риск! Прогноз AI: {task.ai_predicted_hours}ч</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
                     ) : (
-                        task.estimated_hours && <span className="text-muted-foreground">{task.estimated_hours}h</span>
+                        task.estimated_hours && <span className="text-muted-foreground">{task.estimated_hours}ч</span>
                     )}
                 </div>
             </div>
@@ -86,12 +98,21 @@ export default function TaskCard({ task }: TaskCardProps) {
             {/* Avatar */}
              <div className="flex items-center -space-x-2">
                 {task.assigned_to_user ? (
-                   <Avatar className="w-6 h-6 border-2 border-background shadow-sm">
-                       <AvatarImage src={task.assigned_to_user.avatar_url || undefined} alt={task.assigned_to_user.full_name} />
-                       <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
-                           {task.assigned_to_user.full_name.substring(0, 2).toUpperCase()}
-                       </AvatarFallback>
-                   </Avatar>
+                   <TooltipProvider>
+                       <Tooltip>
+                           <TooltipTrigger>
+                               <Avatar className="w-6 h-6 border-2 border-background shadow-sm">
+                                   <AvatarImage src={task.assigned_to_user.avatar_url || undefined} alt={task.assigned_to_user.full_name} />
+                                   <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
+                                       {task.assigned_to_user.full_name.substring(0, 2).toUpperCase()}
+                                   </AvatarFallback>
+                               </Avatar>
+                           </TooltipTrigger>
+                           <TooltipContent>
+                               <p>{task.assigned_to_user.full_name}</p>
+                           </TooltipContent>
+                       </Tooltip>
+                   </TooltipProvider>
                 ) : (
                    <div className="w-6 h-6 rounded-full bg-muted border-2 border-background border-dashed flex items-center justify-center text-[10px] text-muted-foreground">?</div>
                 )}

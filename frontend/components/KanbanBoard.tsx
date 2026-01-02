@@ -16,11 +16,12 @@ import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { useState, useEffect } from 'react';
 import KanbanColumn from './KanbanColumn';
 import TaskCard from './TaskCard';
-import { KanbanBoardSkeleton } from '@/components/Skeletons';
+import { TaskModal } from './TaskModal'; // Import Modal
 import { supabase } from '@/lib/supabase/client';
 import { Database } from '@/types/database.types';
 import { toast } from 'sonner';
 import { DICTIONARY, getStatusLabel } from '@/lib/dictionaries';
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 // Extend Task with necessary fields
 type Task = Database['app_tasks']['Tables']['tasks']['Row'] & {
@@ -41,7 +42,9 @@ export default function KanbanBoard({ boardId }: KanbanBoardProps) {
   const [columns, setColumns] = useState<Column[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [loading, setLoading] = useState(true);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null); // For Modal
 
   const canMoveTask = true;
 
@@ -66,6 +69,7 @@ export default function KanbanBoard({ boardId }: KanbanBoardProps) {
                     setTasks(current => current.map(task => {
                         if (task.id === payload.new.id) {
                             const updatedTask = payload.new as Task;
+                            // Preserve assigned_to_user if possible or re-fetch it
                             const oldTask = current.find(t => t.id === task.id);
                             if (oldTask && oldTask.assigned_to === updatedTask.assigned_to) {
                                 return { ...updatedTask, assigned_to_user: oldTask.assigned_to_user };
@@ -180,7 +184,6 @@ export default function KanbanBoard({ boardId }: KanbanBoardProps) {
     const overTask = tasks.find(t => t.id === overId);
 
     let newColumnId = activeTask.column_id;
-    // let newWeight = activeTask.weight; // Unused for now
 
     if (overColumn) {
         newColumnId = overColumn.id;
@@ -216,32 +219,44 @@ export default function KanbanBoard({ boardId }: KanbanBoardProps) {
     }
   };
 
-  if (loading) return <KanbanBoardSkeleton />;
+  const handleTaskClick = (task: Task) => {
+      setSelectedTask(task);
+  }
 
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCorners}
-      onDragStart={handleDragStart}
-      onDragOver={handleDragOver}
-      onDragEnd={handleDragEnd}
-    >
-      <div className="flex h-full gap-4 overflow-x-auto pb-4 snap-x snap-mandatory">
-        {columns.map((col) => (
-          <div key={col.id} className="snap-center">
-            <KanbanColumn
-                id={col.id}
-                title={getStatusLabel(col.name)}
-                tasks={tasks.filter((task) => task.column_id === col.id)}
-            />
-          </div>
-        ))}
-      </div>
-      <DragOverlay>
-        {activeId ? (
-           <TaskCard task={tasks.find((t) => t.id === activeId)!} />
-        ) : null}
-      </DragOverlay>
-    </DndContext>
+    <>
+        <DndContext
+        sensors={sensors}
+        collisionDetection={closestCorners}
+        onDragStart={handleDragStart}
+        onDragOver={handleDragOver}
+        onDragEnd={handleDragEnd}
+        >
+        <div className="flex h-full gap-4 overflow-x-auto pb-4 snap-x snap-mandatory">
+            {columns.map((col) => (
+            <div key={col.id} className="snap-center">
+                <KanbanColumn
+                    id={col.id}
+                    title={getStatusLabel(col.name)}
+                    tasks={tasks.filter((task) => task.column_id === col.id)}
+                    onTaskClick={handleTaskClick}
+                />
+            </div>
+            ))}
+        </div>
+        <DragOverlay>
+            {activeId ? (
+            <TaskCard task={tasks.find((t) => t.id === activeId)!} />
+            ) : null}
+        </DragOverlay>
+        </DndContext>
+
+        {/* Task Detail Modal */}
+        <Dialog open={!!selectedTask} onOpenChange={(open) => !open && setSelectedTask(null)}>
+            <DialogContent className="max-w-4xl h-[90vh] p-0 overflow-hidden bg-white">
+                 {selectedTask && <TaskModal task={selectedTask} onClose={() => setSelectedTask(null)} />}
+            </DialogContent>
+        </Dialog>
+    </>
   );
 }
