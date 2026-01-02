@@ -1,0 +1,27 @@
+
+> frontend@0.1.0 dev
+> next dev
+
+ ⚠ Port 3000 is in use, trying 3001 instead.
+  ▲ Next.js 14.2.35
+  - Local:        http://localhost:3001
+
+ ✓ Starting...
+ ✓ Ready in 3.2s
+ ○ Compiling /middleware ...
+ ✓ Compiled /middleware in 1175ms (122 modules)
+ ○ Compiling /login ...
+ ✓ Compiled /login in 7.4s (715 modules)
+ GET /login 200 in 8323ms
+ ✓ Compiled in 1070ms (344 modules)
+<w> [webpack.cache.PackFileCacheStrategy] Serializing big strings (130kiB) impacts deserialization performance (consider using Buffer instead and decode when needed)
+ GET /login 200 in 29ms
+ ✓ Compiled in 798ms (697 modules)
+ GET /login 200 in 215ms
+ GET /login 200 in 20ms
+ GET /login 200 in 23ms
+ GET /login 200 in 28ms
+ GET /login 200 in 27ms
+   Reload env: .env.local
+ ✓ Compiled in 1187ms (805 modules)
+ ✓ Compiled in 518ms (344 modules)

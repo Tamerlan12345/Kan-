@@ -1,0 +1,355 @@
+
+> frontend@0.1.0 dev
+> next dev
+
+  ▲ Next.js 14.2.35
+  - Local:        http://localhost:3000
+
+ ✓ Starting...
+Attention: Next.js now collects completely anonymous telemetry regarding usage.
+This information is used to shape Next.js' roadmap and prioritize features.
+You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+https://nextjs.org/telemetry
+
+ ✓ Ready in 1872ms
+ ○ Compiling /middleware ...
+ ✓ Compiled /middleware in 1479ms (122 modules)
+ ⨯ Error: Your project's URL and Key are required to create a Supabase client!
+
+Check your Supabase project's API settings to find these values
+
+https://supabase.com/dashboard/project/_/settings/api
+    at <unknown> (https://supabase.com/dashboard/project/_/settings/api)
+    at createServerClient (webpack-internal:///(middleware)/./node_modules/@supabase/ssr/dist/module/createServerClient.js:15:15)
+    at Object.middleware [as handler] (webpack-internal:///(middleware)/./middleware.ts:16:87)
+    at eval (webpack-internal:///(middleware)/./node_modules/next/dist/esm/server/web/adapter.js:197:31)
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_hooks:91:14)
+    at Object.wrap (webpack-internal:///(middleware)/./node_modules/next/dist/esm/server/async-storage/request-async-storage-wrapper.js:105:24)
+    at eval (webpack-internal:///(middleware)/./node_modules/next/dist/esm/server/web/adapter.js:188:122)
+    at eval (webpack-internal:///(middleware)/./node_modules/next/dist/esm/server/lib/trace/tracer.js:115:36)
+    at NoopContextManager.with (webpack-internal:///(middleware)/./node_modules/next/dist/compiled/@opentelemetry/api/index.js:2:7062)
+    at ContextAPI.with (webpack-internal:///(middleware)/./node_modules/next/dist/compiled/@opentelemetry/api/index.js:2:518)
+    at NoopTracer.startActiveSpan (webpack-internal:///(middleware)/./node_modules/next/dist/compiled/@opentelemetry/api/index.js:2:18108)
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 2.2s (255 modules)
+ GET /login 404 in 13ms
+ ○ Compiling /_not-found ...
+<w> [webpack.cache.PackFileCacheStrategy] Serializing big strings (130kiB) impacts deserialization performance (consider using Buffer instead and decode when needed)
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⨯ Error: Your project's URL and Key are required to create a Supabase client!
+
+Check your Supabase project's API settings to find these values
+
+https://supabase.com/dashboard/project/_/settings/api
+    at <unknown> (https://supabase.com/dashboard/project/_/settings/api)
+    at createServerClient (webpack-internal:///(middleware)/./node_modules/@supabase/ssr/dist/module/createServerClient.js:15:15)
+    at Object.middleware [as handler] (webpack-internal:///(middleware)/./middleware.ts:16:87)
+    at eval (webpack-internal:///(middleware)/./node_modules/next/dist/esm/server/web/adapter.js:197:31)
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_hooks:91:14)
+    at Object.wrap (webpack-internal:///(middleware)/./node_modules/next/dist/esm/server/async-storage/request-async-storage-wrapper.js:105:24)
+    at eval (webpack-internal:///(middleware)/./node_modules/next/dist/esm/server/web/adapter.js:188:122)
+    at eval (webpack-internal:///(middleware)/./node_modules/next/dist/esm/server/lib/trace/tracer.js:115:36)
+    at NoopContextManager.with (webpack-internal:///(middleware)/./node_modules/next/dist/compiled/@opentelemetry/api/index.js:2:7062)
+    at ContextAPI.with (webpack-internal:///(middleware)/./node_modules/next/dist/compiled/@opentelemetry/api/index.js:2:518)
+    at NoopTracer.startActiveSpan (webpack-internal:///(middleware)/./node_modules/next/dist/compiled/@opentelemetry/api/index.js:2:18108)
+ ✓ Compiled /_not-found in 11.1s (881 modules)
+ GET /login 404 in 6ms
+ ⨯ Error [ERR_HTTP_HEADERS_SENT]: Cannot append headers after they are sent to the client
+    at ServerResponse.appendHeader (node:_http_outgoing:756:11)
+digest: "605009736"
+ ⨯ Error: @supabase/ssr: Your project's URL and API key are required to create a Supabase client!
+
+Check your Supabase project's API settings to find these values
+
+https://supabase.com/dashboard/project/_/settings/api
+    at eval (./lib/supabase/client.ts:9:84)
+    at (ssr)/./lib/supabase/client.ts (/app/frontend/.next/server/app/_not-found/page.js:163:1)
+    at __webpack_require__ (/app/frontend/.next/server/webpack-runtime.js:33:42)
+    at eval (./components/AiChatWidget.tsx:19:78)
+    at (ssr)/./components/AiChatWidget.tsx (/app/frontend/.next/server/app/_not-found/page.js:97:1)
+    at Object.__webpack_require__ [as require] (/app/frontend/.next/server/webpack-runtime.js:33:42)
+digest: "2963480274"
+ ⨯ Error [ERR_HTTP_HEADERS_SENT]: Cannot append headers after they are sent to the client
+    at ServerResponse.appendHeader (node:_http_outgoing:756:11)
+digest: "605009736"
+ ⨯ Error: @supabase/ssr: Your project's URL and API key are required to create a Supabase client!
+
+Check your Supabase project's API settings to find these values
+
+https://supabase.com/dashboard/project/_/settings/api
+    at eval (./lib/supabase/client.ts:9:84)
+    at (ssr)/./lib/supabase/client.ts (/app/frontend/.next/server/app/_not-found/page.js:163:1)
+    at __webpack_require__ (/app/frontend/.next/server/webpack-runtime.js:33:42)
+    at eval (./components/AiChatWidget.tsx:19:78)
+    at (ssr)/./components/AiChatWidget.tsx (/app/frontend/.next/server/app/_not-found/page.js:97:1)
+    at Object.__webpack_require__ [as require] (/app/frontend/.next/server/webpack-runtime.js:33:42)
+digest: "2963480274"
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⨯ Error: Your project's URL and Key are required to create a Supabase client!
+
+Check your Supabase project's API settings to find these values
+
+https://supabase.com/dashboard/project/_/settings/api
+    at <unknown> (https://supabase.com/dashboard/project/_/settings/api)
+    at createServerClient (webpack-internal:///(middleware)/./node_modules/@supabase/ssr/dist/module/createServerClient.js:15:15)
+    at Object.middleware [as handler] (webpack-internal:///(middleware)/./middleware.ts:16:87)
+    at eval (webpack-internal:///(middleware)/./node_modules/next/dist/esm/server/web/adapter.js:197:31)
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_hooks:91:14)
+    at Object.wrap (webpack-internal:///(middleware)/./node_modules/next/dist/esm/server/async-storage/request-async-storage-wrapper.js:105:24)
+    at eval (webpack-internal:///(middleware)/./node_modules/next/dist/esm/server/web/adapter.js:188:122)
+    at eval (webpack-internal:///(middleware)/./node_modules/next/dist/esm/server/lib/trace/tracer.js:115:36)
+    at NoopContextManager.with (webpack-internal:///(middleware)/./node_modules/next/dist/compiled/@opentelemetry/api/index.js:2:7062)
+    at ContextAPI.with (webpack-internal:///(middleware)/./node_modules/next/dist/compiled/@opentelemetry/api/index.js:2:518)
+    at NoopTracer.startActiveSpan (webpack-internal:///(middleware)/./node_modules/next/dist/compiled/@opentelemetry/api/index.js:2:18108)
+ ⨯ Error: Your project's URL and Key are required to create a Supabase client!
+
+Check your Supabase project's API settings to find these values
+
+https://supabase.com/dashboard/project/_/settings/api
+    at <unknown> (https://supabase.com/dashboard/project/_/settings/api)
+    at createServerClient (webpack-internal:///(middleware)/./node_modules/@supabase/ssr/dist/module/createServerClient.js:15:15)
+    at Object.middleware [as handler] (webpack-internal:///(middleware)/./middleware.ts:16:87)
+    at eval (webpack-internal:///(middleware)/./node_modules/next/dist/esm/server/web/adapter.js:197:31)
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_hooks:91:14)
+    at Object.wrap (webpack-internal:///(middleware)/./node_modules/next/dist/esm/server/async-storage/request-async-storage-wrapper.js:105:24)
+    at eval (webpack-internal:///(middleware)/./node_modules/next/dist/esm/server/web/adapter.js:188:122)
+    at eval (webpack-internal:///(middleware)/./node_modules/next/dist/esm/server/lib/trace/tracer.js:115:36)
+    at NoopContextManager.with (webpack-internal:///(middleware)/./node_modules/next/dist/compiled/@opentelemetry/api/index.js:2:7062)
+    at ContextAPI.with (webpack-internal:///(middleware)/./node_modules/next/dist/compiled/@opentelemetry/api/index.js:2:518)
+    at NoopTracer.startActiveSpan (webpack-internal:///(middleware)/./node_modules/next/dist/compiled/@opentelemetry/api/index.js:2:18108)
+ GET /login 404 in 2ms
+ ⨯ Error [ERR_HTTP_HEADERS_SENT]: Cannot append headers after they are sent to the client
+    at ServerResponse.appendHeader (node:_http_outgoing:756:11)
+digest: "605009736"
+ ⨯ Error: @supabase/ssr: Your project's URL and API key are required to create a Supabase client!
+
+Check your Supabase project's API settings to find these values
+
+https://supabase.com/dashboard/project/_/settings/api
+    at eval (./lib/supabase/client.ts:9:84)
+    at (ssr)/./lib/supabase/client.ts (/app/frontend/.next/server/app/_not-found/page.js:163:1)
+    at __webpack_require__ (/app/frontend/.next/server/webpack-runtime.js:33:42)
+    at eval (./components/AiChatWidget.tsx:19:78)
+    at (ssr)/./components/AiChatWidget.tsx (/app/frontend/.next/server/app/_not-found/page.js:97:1)
+    at Object.__webpack_require__ [as require] (/app/frontend/.next/server/webpack-runtime.js:33:42)
+digest: "2963480274"
+ ⨯ Error: Your project's URL and Key are required to create a Supabase client!
+
+Check your Supabase project's API settings to find these values
+
+https://supabase.com/dashboard/project/_/settings/api
+    at <unknown> (https://supabase.com/dashboard/project/_/settings/api)
+    at createServerClient (webpack-internal:///(middleware)/./node_modules/@supabase/ssr/dist/module/createServerClient.js:15:15)
+    at Object.middleware [as handler] (webpack-internal:///(middleware)/./middleware.ts:16:87)
+    at eval (webpack-internal:///(middleware)/./node_modules/next/dist/esm/server/web/adapter.js:197:31)
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_hooks:91:14)
+    at Object.wrap (webpack-internal:///(middleware)/./node_modules/next/dist/esm/server/async-storage/request-async-storage-wrapper.js:105:24)
+    at eval (webpack-internal:///(middleware)/./node_modules/next/dist/esm/server/web/adapter.js:188:122)
+    at eval (webpack-internal:///(middleware)/./node_modules/next/dist/esm/server/lib/trace/tracer.js:115:36)
+    at NoopContextManager.with (webpack-internal:///(middleware)/./node_modules/next/dist/compiled/@opentelemetry/api/index.js:2:7062)
+    at ContextAPI.with (webpack-internal:///(middleware)/./node_modules/next/dist/compiled/@opentelemetry/api/index.js:2:518)
+    at NoopTracer.startActiveSpan (webpack-internal:///(middleware)/./node_modules/next/dist/compiled/@opentelemetry/api/index.js:2:18108)
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, lstat '/app/frontend/.next/server/app/_not-found'
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../../.next/server/app/_not-found/page' in /app/frontend/node_modules/next/dist/server for build dependencies doesn't lead to expected result '/app/frontend/.next/server/app/_not-found/page.js', but to 'Error: Can't resolve '../../../../.next/server/app/_not-found/page' in '/app/frontend/node_modules/next/dist/server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../../.next/server/app/_not-found/page (expected /app/frontend/.next/server/app/_not-found/page.js)
+<w>  at file dependencies /app/frontend/node_modules/next/dist/server/require.js
+<w>  at file /app/frontend/node_modules/next/dist/server/require.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/server/load-components.js
+<w>  at file /app/frontend/node_modules/next/dist/server/load-components.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/build/utils.js
+<w>  at file /app/frontend/node_modules/next/dist/build/utils.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/build/webpack/loaders/next-route-loader/index.js
+<w>  at file /app/frontend/node_modules/next/dist/build/webpack/loaders/next-route-loader/index.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/compiled/loader-runner/LoaderRunner.js
+<w>  at file /app/frontend/node_modules/next/dist/compiled/loader-runner/LoaderRunner.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/compiled/webpack/bundle5.js
+<w>  at file /app/frontend/node_modules/next/dist/compiled/webpack/bundle5.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/compiled/webpack/webpack.js
+<w>  at file /app/frontend/node_modules/next/dist/compiled/webpack/webpack.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/build/webpack/plugins/define-env-plugin.js
+<w>  at file /app/frontend/node_modules/next/dist/build/webpack/plugins/define-env-plugin.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/build/swc/index.js
+<w>  at file /app/frontend/node_modules/next/dist/build/swc/index.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/build/webpack/loaders/next-barrel-loader.js
+<w>  at file /app/frontend/node_modules/next/dist/build/webpack/loaders/next-barrel-loader.js
+<w>  at resolve commonjs /app/frontend/node_modules/next/dist/build/webpack/loaders/next-barrel-loader.js
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../../.next/server/pages/_error' in /app/frontend/node_modules/next/dist/server for build dependencies doesn't lead to expected result '/app/frontend/.next/server/pages/_error.js', but to 'Error: Can't resolve '../../../../.next/server/pages/_error' in '/app/frontend/node_modules/next/dist/server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../../.next/server/pages/_error (expected /app/frontend/.next/server/pages/_error.js)
+<w>  at file dependencies /app/frontend/node_modules/next/dist/server/require.js
+<w>  at file /app/frontend/node_modules/next/dist/server/require.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/server/load-components.js
+<w>  at file /app/frontend/node_modules/next/dist/server/load-components.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/build/utils.js
+<w>  at file /app/frontend/node_modules/next/dist/build/utils.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/build/webpack/loaders/next-route-loader/index.js
+<w>  at file /app/frontend/node_modules/next/dist/build/webpack/loaders/next-route-loader/index.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/compiled/loader-runner/LoaderRunner.js
+<w>  at file /app/frontend/node_modules/next/dist/compiled/loader-runner/LoaderRunner.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/compiled/webpack/bundle5.js
+<w>  at file /app/frontend/node_modules/next/dist/compiled/webpack/bundle5.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/compiled/webpack/webpack.js
+<w>  at file /app/frontend/node_modules/next/dist/compiled/webpack/webpack.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/build/webpack/plugins/define-env-plugin.js
+<w>  at file /app/frontend/node_modules/next/dist/build/webpack/plugins/define-env-plugin.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/build/swc/index.js
+<w>  at file /app/frontend/node_modules/next/dist/build/swc/index.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/build/webpack/loaders/next-barrel-loader.js
+<w>  at file /app/frontend/node_modules/next/dist/build/webpack/loaders/next-barrel-loader.js
+<w>  at resolve commonjs /app/frontend/node_modules/next/dist/build/webpack/loaders/next-barrel-loader.js
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, lstat '/app/frontend/.next/server/app/_not-found'
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../../.next/server/app/_not-found/page' in /app/frontend/node_modules/next/dist/server for build dependencies doesn't lead to expected result '/app/frontend/.next/server/app/_not-found/page.js', but to 'Error: Can't resolve '../../../../.next/server/app/_not-found/page' in '/app/frontend/node_modules/next/dist/server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../../.next/server/app/_not-found/page (expected /app/frontend/.next/server/app/_not-found/page.js)
+<w>  at file dependencies /app/frontend/node_modules/next/dist/server/require.js
+<w>  at file /app/frontend/node_modules/next/dist/server/require.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/server/load-components.js
+<w>  at file /app/frontend/node_modules/next/dist/server/load-components.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/build/utils.js
+<w>  at file /app/frontend/node_modules/next/dist/build/utils.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/build/webpack/loaders/next-app-loader.js
+<w>  at file /app/frontend/node_modules/next/dist/build/webpack/loaders/next-app-loader.js
+<w>  at resolve commonjs /app/frontend/node_modules/next/dist/build/webpack/loaders/next-app-loader.js
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../../.next/server/pages/_error' in /app/frontend/node_modules/next/dist/server for build dependencies doesn't lead to expected result '/app/frontend/.next/server/pages/_error.js', but to 'Error: Can't resolve '../../../../.next/server/pages/_error' in '/app/frontend/node_modules/next/dist/server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../../.next/server/pages/_error (expected /app/frontend/.next/server/pages/_error.js)
+<w>  at file dependencies /app/frontend/node_modules/next/dist/server/require.js
+<w>  at file /app/frontend/node_modules/next/dist/server/require.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/server/load-components.js
+<w>  at file /app/frontend/node_modules/next/dist/server/load-components.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/build/utils.js
+<w>  at file /app/frontend/node_modules/next/dist/build/utils.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/build/webpack/loaders/next-app-loader.js
+<w>  at file /app/frontend/node_modules/next/dist/build/webpack/loaders/next-app-loader.js
+<w>  at resolve commonjs /app/frontend/node_modules/next/dist/build/webpack/loaders/next-app-loader.js
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../../.next/server/pages/_app' in /app/frontend/node_modules/next/dist/server for build dependencies doesn't lead to expected result '/app/frontend/.next/server/pages/_app.js', but to 'Error: Can't resolve '../../../../.next/server/pages/_app' in '/app/frontend/node_modules/next/dist/server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../../.next/server/pages/_app (expected /app/frontend/.next/server/pages/_app.js)
+<w>  at file dependencies /app/frontend/node_modules/next/dist/server/require.js
+<w>  at file /app/frontend/node_modules/next/dist/server/require.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/server/load-components.js
+<w>  at file /app/frontend/node_modules/next/dist/server/load-components.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/build/utils.js
+<w>  at file /app/frontend/node_modules/next/dist/build/utils.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/build/webpack/loaders/next-app-loader.js
+<w>  at file /app/frontend/node_modules/next/dist/build/webpack/loaders/next-app-loader.js
+<w>  at resolve commonjs /app/frontend/node_modules/next/dist/build/webpack/loaders/next-app-loader.js
+ ✓ Compiled in 1875ms (522 modules)
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, lstat '/app/frontend/.next/server/app/_not-found'
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../../.next/server/pages/_error' in /app/frontend/node_modules/next/dist/server for build dependencies doesn't lead to expected result '/app/frontend/.next/server/pages/_error.js', but to 'Error: Can't resolve '../../../../.next/server/pages/_error' in '/app/frontend/node_modules/next/dist/server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../../.next/server/pages/_error (expected /app/frontend/.next/server/pages/_error.js)
+<w>  at file dependencies /app/frontend/node_modules/next/dist/server/require.js
+<w>  at file /app/frontend/node_modules/next/dist/server/require.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/server/load-components.js
+<w>  at file /app/frontend/node_modules/next/dist/server/load-components.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/build/utils.js
+<w>  at file /app/frontend/node_modules/next/dist/build/utils.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/build/webpack/loaders/next-route-loader/index.js
+<w>  at file /app/frontend/node_modules/next/dist/build/webpack/loaders/next-route-loader/index.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/compiled/loader-runner/LoaderRunner.js
+<w>  at file /app/frontend/node_modules/next/dist/compiled/loader-runner/LoaderRunner.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/compiled/webpack/bundle5.js
+<w>  at file /app/frontend/node_modules/next/dist/compiled/webpack/bundle5.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/compiled/webpack/webpack.js
+<w>  at file /app/frontend/node_modules/next/dist/compiled/webpack/webpack.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/build/webpack/plugins/define-env-plugin.js
+<w>  at file /app/frontend/node_modules/next/dist/build/webpack/plugins/define-env-plugin.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/build/swc/index.js
+<w>  at file /app/frontend/node_modules/next/dist/build/swc/index.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/build/webpack/loaders/next-barrel-loader.js
+<w>  at file /app/frontend/node_modules/next/dist/build/webpack/loaders/next-barrel-loader.js
+<w>  at resolve commonjs /app/frontend/node_modules/next/dist/build/webpack/loaders/next-barrel-loader.js
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../../.next/server/app/_not-found/page' in /app/frontend/node_modules/next/dist/server for build dependencies doesn't lead to expected result '/app/frontend/.next/server/app/_not-found/page.js', but to 'Error: Can't resolve '../../../../.next/server/app/_not-found/page' in '/app/frontend/node_modules/next/dist/server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../../.next/server/app/_not-found/page (expected /app/frontend/.next/server/app/_not-found/page.js)
+<w>  at file dependencies /app/frontend/node_modules/next/dist/server/require.js
+<w>  at file /app/frontend/node_modules/next/dist/server/require.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/server/load-components.js
+<w>  at file /app/frontend/node_modules/next/dist/server/load-components.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/build/utils.js
+<w>  at file /app/frontend/node_modules/next/dist/build/utils.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/build/webpack/loaders/next-route-loader/index.js
+<w>  at file /app/frontend/node_modules/next/dist/build/webpack/loaders/next-route-loader/index.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/compiled/loader-runner/LoaderRunner.js
+<w>  at file /app/frontend/node_modules/next/dist/compiled/loader-runner/LoaderRunner.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/compiled/webpack/bundle5.js
+<w>  at file /app/frontend/node_modules/next/dist/compiled/webpack/bundle5.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/compiled/webpack/webpack.js
+<w>  at file /app/frontend/node_modules/next/dist/compiled/webpack/webpack.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/build/webpack/plugins/define-env-plugin.js
+<w>  at file /app/frontend/node_modules/next/dist/build/webpack/plugins/define-env-plugin.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/build/swc/index.js
+<w>  at file /app/frontend/node_modules/next/dist/build/swc/index.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/build/webpack/loaders/next-barrel-loader.js
+<w>  at file /app/frontend/node_modules/next/dist/build/webpack/loaders/next-barrel-loader.js
+<w>  at resolve commonjs /app/frontend/node_modules/next/dist/build/webpack/loaders/next-barrel-loader.js
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../../.next/server/pages/_app' in /app/frontend/node_modules/next/dist/server for build dependencies doesn't lead to expected result '/app/frontend/.next/server/pages/_app.js', but to 'Error: Can't resolve '../../../../.next/server/pages/_app' in '/app/frontend/node_modules/next/dist/server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../../.next/server/pages/_app (expected /app/frontend/.next/server/pages/_app.js)
+<w>  at file dependencies /app/frontend/node_modules/next/dist/server/require.js
+<w>  at file /app/frontend/node_modules/next/dist/server/require.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/server/load-components.js
+<w>  at file /app/frontend/node_modules/next/dist/server/load-components.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/build/utils.js
+<w>  at file /app/frontend/node_modules/next/dist/build/utils.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/build/webpack/loaders/next-route-loader/index.js
+<w>  at file /app/frontend/node_modules/next/dist/build/webpack/loaders/next-route-loader/index.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/compiled/loader-runner/LoaderRunner.js
+<w>  at file /app/frontend/node_modules/next/dist/compiled/loader-runner/LoaderRunner.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/compiled/webpack/bundle5.js
+<w>  at file /app/frontend/node_modules/next/dist/compiled/webpack/bundle5.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/compiled/webpack/webpack.js
+<w>  at file /app/frontend/node_modules/next/dist/compiled/webpack/webpack.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/build/webpack/plugins/define-env-plugin.js
+<w>  at file /app/frontend/node_modules/next/dist/build/webpack/plugins/define-env-plugin.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/build/swc/index.js
+<w>  at file /app/frontend/node_modules/next/dist/build/swc/index.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/build/webpack/loaders/next-barrel-loader.js
+<w>  at file /app/frontend/node_modules/next/dist/build/webpack/loaders/next-barrel-loader.js
+<w>  at resolve commonjs /app/frontend/node_modules/next/dist/build/webpack/loaders/next-barrel-loader.js
+   Reload env: .env.local
+ ✓ Compiled in 8.6s (711 modules)
+ ✓ Compiled in 496ms (522 modules)
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, lstat '/app/frontend/.next/server/app/_not-found'
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../../.next/server/app/_not-found/page' in /app/frontend/node_modules/next/dist/server for build dependencies doesn't lead to expected result '/app/frontend/.next/server/app/_not-found/page.js', but to 'Error: Can't resolve '../../../../.next/server/app/_not-found/page' in '/app/frontend/node_modules/next/dist/server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../../.next/server/app/_not-found/page (expected /app/frontend/.next/server/app/_not-found/page.js)
+<w>  at file dependencies /app/frontend/node_modules/next/dist/server/require.js
+<w>  at file /app/frontend/node_modules/next/dist/server/require.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/server/load-components.js
+<w>  at file /app/frontend/node_modules/next/dist/server/load-components.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/build/utils.js
+<w>  at file /app/frontend/node_modules/next/dist/build/utils.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/build/webpack/loaders/next-route-loader/index.js
+<w>  at file /app/frontend/node_modules/next/dist/build/webpack/loaders/next-route-loader/index.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/compiled/loader-runner/LoaderRunner.js
+<w>  at file /app/frontend/node_modules/next/dist/compiled/loader-runner/LoaderRunner.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/compiled/webpack/bundle5.js
+<w>  at file /app/frontend/node_modules/next/dist/compiled/webpack/bundle5.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/compiled/webpack/webpack.js
+<w>  at file /app/frontend/node_modules/next/dist/compiled/webpack/webpack.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/build/webpack/plugins/define-env-plugin.js
+<w>  at file /app/frontend/node_modules/next/dist/build/webpack/plugins/define-env-plugin.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/build/swc/index.js
+<w>  at file /app/frontend/node_modules/next/dist/build/swc/index.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/build/webpack/loaders/next-barrel-loader.js
+<w>  at file /app/frontend/node_modules/next/dist/build/webpack/loaders/next-barrel-loader.js
+<w>  at resolve commonjs /app/frontend/node_modules/next/dist/build/webpack/loaders/next-barrel-loader.js
+<w> [webpack.cache.PackFileCacheStrategy] Serializing big strings (130kiB) impacts deserialization performance (consider using Buffer instead and decode when needed)
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, lstat '/app/frontend/.next/server/app/_not-found'
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../../.next/server/app/_not-found/page' in /app/frontend/node_modules/next/dist/server for build dependencies doesn't lead to expected result '/app/frontend/.next/server/app/_not-found/page.js', but to 'Error: Can't resolve '../../../../.next/server/app/_not-found/page' in '/app/frontend/node_modules/next/dist/server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../../.next/server/app/_not-found/page (expected /app/frontend/.next/server/app/_not-found/page.js)
+<w>  at file dependencies /app/frontend/node_modules/next/dist/server/require.js
+<w>  at file /app/frontend/node_modules/next/dist/server/require.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/server/load-components.js
+<w>  at file /app/frontend/node_modules/next/dist/server/load-components.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/build/utils.js
+<w>  at file /app/frontend/node_modules/next/dist/build/utils.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/build/webpack/loaders/next-route-loader/index.js
+<w>  at file /app/frontend/node_modules/next/dist/build/webpack/loaders/next-route-loader/index.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/compiled/loader-runner/LoaderRunner.js
+<w>  at file /app/frontend/node_modules/next/dist/compiled/loader-runner/LoaderRunner.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/compiled/webpack/bundle5.js
+<w>  at file /app/frontend/node_modules/next/dist/compiled/webpack/bundle5.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/compiled/webpack/webpack.js
+<w>  at file /app/frontend/node_modules/next/dist/compiled/webpack/webpack.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/build/webpack/plugins/define-env-plugin.js
+<w>  at file /app/frontend/node_modules/next/dist/build/webpack/plugins/define-env-plugin.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/build/swc/index.js
+<w>  at file /app/frontend/node_modules/next/dist/build/swc/index.js
+<w>  at file dependencies /app/frontend/node_modules/next/dist/build/webpack/loaders/next-barrel-loader.js
+<w>  at file /app/frontend/node_modules/next/dist/build/webpack/loaders/next-barrel-loader.js
+<w>  at resolve commonjs /app/frontend/node_modules/next/dist/build/webpack/loaders/next-barrel-loader.js
