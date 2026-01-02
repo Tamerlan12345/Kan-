@@ -18,6 +18,7 @@ interface KanbanColumnProps {
   title: string;
   tasks: Task[];
   onTaskClick?: (task: Task) => void;
+  onMoveTask?: (taskId: string, targetColumnId: string) => void;
 }
 
 // Simple mapping for column titles to Russian
@@ -29,7 +30,7 @@ const COLUMN_TITLES: Record<string, string> = {
     'blocked': 'Заблокировано'
 }
 
-export default function KanbanColumn({ id, title, tasks, onTaskClick }: KanbanColumnProps) {
+export default function KanbanColumn({ id, title, tasks, onTaskClick, onMoveTask }: KanbanColumnProps) {
   const { setNodeRef } = useDroppable({
     id: id,
   });
@@ -87,6 +88,7 @@ export default function KanbanColumn({ id, title, tasks, onTaskClick }: KanbanCo
                         key={task.id}
                         task={task}
                         onClick={() => onTaskClick?.(task)}
+                        onMove={onMoveTask}
                     />
                 ))}
                 </SortableContext>

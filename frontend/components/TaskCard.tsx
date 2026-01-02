@@ -3,6 +3,14 @@ import { CSS } from '@dnd-kit/utilities';
 import { Database } from '@/types/database.types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Badge } from '@/components/ui/badge';
+import { AlertTriangle, Bug, Lightbulb, Zap, ArrowRight, MoreHorizontal } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 type Task = Database['app_tasks']['Tables']['tasks']['Row'] & {
     assigned_to_user?: Database['app_auth']['Tables']['users']['Row']
@@ -11,9 +19,11 @@ type Task = Database['app_tasks']['Tables']['tasks']['Row'] & {
 interface TaskCardProps {
   task: Task;
   onClick?: () => void;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  onMove?: (taskId: string, targetColumnId: string) => void;
 }
 
-export default function TaskCard({ task, onClick }: TaskCardProps) {
+export default function TaskCard({ task, onClick, onMove }: TaskCardProps) {
   const {
     attributes,
     listeners,
@@ -30,14 +40,24 @@ export default function TaskCard({ task, onClick }: TaskCardProps) {
   };
 
   const priorityConfig = {
-    P1: { color: 'bg-red-500', badge: 'bg-red-100 text-red-800 border-red-200' },
-    P2: { color: 'bg-yellow-500', badge: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
-    P3: { color: 'bg-gray-400', badge: 'bg-gray-100 text-gray-800 border-gray-200' },
-    P4: { color: 'bg-green-500', badge: 'bg-green-100 text-green-800 border-green-200' },
-  }[task.priority || 'P3'] || { color: 'bg-gray-400', badge: 'bg-gray-100 text-gray-800' };
+    P1: { color: 'border-red-500', badge: 'bg-red-100 text-red-800 border-red-200' },
+    P2: { color: 'border-yellow-500', badge: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
+    P3: { color: 'border-blue-400', badge: 'bg-blue-100 text-blue-800 border-blue-200' },
+    P4: { color: 'border-gray-300', badge: 'bg-gray-100 text-gray-800 border-gray-200' },
+  }[task.priority || 'P3'] || { color: 'border-gray-300', badge: 'bg-gray-100 text-gray-800' };
 
   const isRisk = task.ai_predicted_hours && task.estimated_hours &&
                  task.ai_predicted_hours > task.estimated_hours * 1.2;
+
+  // Determine Task Type Icon (Logic based on title or tags usually, but defaulting to logic or generic here if not specified in DB)
+  // Assuming no explicit 'type' column, we can guess from tags or just show a default.
+  // Ideally, there would be a 'type' field. For now, let's use tags or title keywords.
+  const getTaskTypeIcon = () => {
+      const lowerTitle = task.title.toLowerCase();
+      if (lowerTitle.includes('bug') || lowerTitle.includes('fix')) return <Bug className="h-3 w-3 text-red-500" />;
+      if (lowerTitle.includes('feat') || lowerTitle.includes('add')) return <Zap className="h-3 w-3 text-yellow-500" />;
+      return <Lightbulb className="h-3 w-3 text-blue-500" />;
+  };
 
   return (
     <div
@@ -46,43 +66,73 @@ export default function TaskCard({ task, onClick }: TaskCardProps) {
       {...attributes}
       {...listeners}
       onClick={onClick}
-      className="group relative cursor-grab active:cursor-grabbing rounded-lg bg-card p-4 shadow-sm hover:shadow-md transition-all border border-border/50 overflow-hidden"
+      className={`group relative cursor-grab active:cursor-grabbing rounded-lg bg-card p-3 shadow-sm hover:shadow-md transition-all border border-l-4 ${priorityConfig.color} ${isRisk ? 'border-red-200 bg-red-50/50' : 'border-border/50'} overflow-hidden`}
     >
-      {/* Priority Strip */}
-      <div className={`absolute left-0 top-0 bottom-0 w-1 ${priorityConfig.color}`} />
-
-      <div className="pl-2 space-y-3">
-        {/* Header: Title and Priority Badge */}
+      <div className="space-y-2">
+        {/* Header: Type, Title and Actions */}
         <div className="flex justify-between items-start gap-2">
-          <h4 className="font-medium text-sm text-card-foreground leading-snug break-words line-clamp-2">{task.title}</h4>
+            <div className="flex items-start gap-2">
+                <div className="mt-0.5 opacity-70">
+                    {getTaskTypeIcon()}
+                </div>
+                <h4 className="font-medium text-sm text-foreground leading-snug break-words line-clamp-2">{task.title}</h4>
+            </div>
+
+            {/* Mobile Actions Menu (Prevent DnD propagation) */}
+            <div className="md:hidden" onPointerDown={(e) => e.stopPropagation()}>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                         <button className="text-muted-foreground hover:text-foreground p-1">
+                             <MoreHorizontal className="h-4 w-4" />
+                         </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                         {/* We can populate this if we pass move handler */}
+                         {onMove && (
+                             <>
+                                <DropdownMenuItem onClick={() => onMove(task.id, 'todo')}>
+                                    <ArrowRight className="mr-2 h-4 w-4" /> To Do
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => onMove(task.id, 'in_progress')}>
+                                    <ArrowRight className="mr-2 h-4 w-4" /> In Progress
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => onMove(task.id, 'done')}>
+                                    <ArrowRight className="mr-2 h-4 w-4" /> Done
+                                </DropdownMenuItem>
+                             </>
+                         )}
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </div>
         </div>
 
         {/* Tags */}
          {task.tags && task.tags.length > 0 && (
              <div className="flex gap-1 flex-wrap">
                  {task.tags.map(tag => (
-                     <span key={tag} className="bg-secondary/50 text-secondary-foreground px-1.5 py-0.5 rounded text-[10px] font-medium">#{tag}</span>
+                     <span key={tag} className="bg-secondary text-secondary-foreground px-1.5 py-0.5 rounded-[4px] text-[10px] font-medium border border-border/50">#{tag}</span>
                  ))}
              </div>
          )}
 
         {/* Footer: Date, Risk, Assignee */}
-        <div className="flex justify-between items-end pt-2">
-            <div className="flex flex-col gap-1 text-xs">
+        <div className="flex justify-between items-end pt-1">
+            <div className="flex items-center gap-3 text-xs text-muted-foreground">
                  {task.due_date && (
-                     <div className={`text-muted-foreground ${new Date(task.due_date) < new Date() ? 'text-red-500 font-medium' : ''}`}>
+                     <div className={`${new Date(task.due_date) < new Date() ? 'text-red-500 font-medium' : ''}`}>
                          {new Date(task.due_date).toLocaleDateString("ru-RU", { month: 'short', day: 'numeric' })}
                      </div>
                  )}
-                 {/* Risk Warning / Time */}
-                 <div className="flex items-center">
+
+                 <div className="flex items-center gap-1">
                     {isRisk ? (
                         <TooltipProvider>
                             <Tooltip>
-                                <TooltipTrigger>
-                                    <span className="text-red-600 font-bold flex items-center gap-1 cursor-help">
-                                        ⚠️ {task.estimated_hours}ч
-                                    </span>
+                                <TooltipTrigger asChild>
+                                    <div className="flex items-center text-red-600 font-medium bg-red-100 px-1.5 rounded border border-red-200">
+                                        <AlertTriangle className="h-3 w-3 mr-1" />
+                                        {task.estimated_hours}ч
+                                    </div>
                                 </TooltipTrigger>
                                 <TooltipContent>
                                     <p>Риск! Прогноз AI: {task.ai_predicted_hours}ч</p>
@@ -90,20 +140,25 @@ export default function TaskCard({ task, onClick }: TaskCardProps) {
                             </Tooltip>
                         </TooltipProvider>
                     ) : (
-                        task.estimated_hours && <span className="text-muted-foreground">{task.estimated_hours}ч</span>
+                        task.estimated_hours && <span>{task.estimated_hours}ч</span>
                     )}
                 </div>
+
+                 {/* Priority Badge (Small) */}
+                 <Badge variant="outline" className={`text-[10px] h-4 px-1 rounded-sm border-0 ${priorityConfig.badge}`}>
+                     {task.priority || 'P3'}
+                 </Badge>
             </div>
 
             {/* Avatar */}
-             <div className="flex items-center -space-x-2">
+             <div className="flex items-center">
                 {task.assigned_to_user ? (
                    <TooltipProvider>
                        <Tooltip>
                            <TooltipTrigger>
-                               <Avatar className="w-6 h-6 border-2 border-background shadow-sm">
+                               <Avatar className="w-5 h-5 border border-background shadow-sm">
                                    <AvatarImage src={task.assigned_to_user.avatar_url || undefined} alt={task.assigned_to_user.full_name} />
-                                   <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
+                                   <AvatarFallback className="text-[9px] bg-primary/10 text-primary">
                                        {task.assigned_to_user.full_name.substring(0, 2).toUpperCase()}
                                    </AvatarFallback>
                                </Avatar>
@@ -114,7 +169,7 @@ export default function TaskCard({ task, onClick }: TaskCardProps) {
                        </Tooltip>
                    </TooltipProvider>
                 ) : (
-                   <div className="w-6 h-6 rounded-full bg-muted border-2 border-background border-dashed flex items-center justify-center text-[10px] text-muted-foreground">?</div>
+                   <div className="w-5 h-5 rounded-full bg-muted border border-border border-dashed flex items-center justify-center text-[10px] text-muted-foreground">?</div>
                 )}
             </div>
         </div>
