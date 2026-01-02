@@ -181,7 +181,7 @@ export function TeamChat({ projectId, className }: TeamChatProps) {
                     </div>
                 ) : (
                     <div className="space-y-6 pb-4">
-                        {messages.map((msg, i) => {
+                        {messages.map((msg) => {
                             const isMe = msg.user_id === currentUserId
                             const userInfo = msg.user
                             const fullName = userInfo?.full_name || 'Unknown'

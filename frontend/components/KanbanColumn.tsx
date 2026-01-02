@@ -100,6 +100,7 @@ export default function KanbanColumn({ id, title, tasks, onTaskClick, onMoveTask
       </div>
 
       <div ref={setNodeRef} className="flex-1 p-2 min-h-0 overflow-y-auto custom-scrollbar">
+        <ScrollArea className="h-full pr-3">
           <div className="space-y-3 pb-2">
             <SortableContext items={tasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
             {tasks.map((task) => (
@@ -118,6 +119,7 @@ export default function KanbanColumn({ id, title, tasks, onTaskClick, onMoveTask
                 </div>
             )}
         </div>
+        </ScrollArea>
       </div>
     </div>
   );
