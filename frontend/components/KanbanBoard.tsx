@@ -44,6 +44,7 @@ export default function KanbanBoard({ boardId }: KanbanBoardProps) {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [loading, setLoading] = useState(true);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [projectId, setProjectId] = useState<string | null>(null);
 
   const canMoveTask = true;
 
@@ -102,6 +103,16 @@ export default function KanbanBoard({ boardId }: KanbanBoardProps) {
 
         if (colsError) throw colsError;
         setColumns(cols || []);
+
+        const { data: board, error: boardError } = await supabase
+            .schema('app_projects')
+            .from('boards')
+            .select('project_id')
+            .eq('id', boardId)
+            .single();
+
+        if (boardError) console.error("Error fetching board details:", boardError);
+        if (board) setProjectId(board.project_id);
 
         const { data: t, error: tError } = await supabase
             .schema('app_tasks')
@@ -254,6 +265,7 @@ export default function KanbanBoard({ boardId }: KanbanBoardProps) {
             task={selectedTask}
             isOpen={!!selectedTask}
             onClose={() => setSelectedTask(null)}
+            projectId={projectId}
         />
     </>
   );

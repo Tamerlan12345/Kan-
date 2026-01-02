@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Database } from '@/types/database.types'
 import { Button } from '@/components/ui/button'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -17,7 +16,6 @@ import {
     Loader2,
     Plus,
     Trash2,
-    Calendar,
     Flag
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
@@ -33,6 +31,7 @@ interface TaskSheetProps {
   task: Task | null
   isOpen: boolean
   onClose: () => void
+  projectId: string | null
 }
 
 interface ProposedSubtask {
@@ -49,7 +48,7 @@ interface Subtask {
     created_at: string
 }
 
-export function TaskSheet({ task, isOpen, onClose }: TaskSheetProps) {
+export function TaskSheet({ task, isOpen, onClose, projectId }: TaskSheetProps) {
   const { role } = usePermission()
 
   // Subtasks/Checklist State
@@ -64,15 +63,6 @@ export function TaskSheet({ task, isOpen, onClose }: TaskSheetProps) {
   // Task Decomposition State
   const [isDecomposing, setIsDecomposing] = useState(false)
   const [proposedSubtasks, setProposedSubtasks] = useState<ProposedSubtask[] | null>(null)
-
-  useEffect(() => {
-      if (task?.id && isOpen) {
-          fetchSubtasks()
-      } else {
-          setSubtasks([])
-          setProposedSubtasks(null)
-      }
-  }, [task?.id, isOpen])
 
   const fetchSubtasks = async () => {
       if (!task) return
@@ -92,6 +82,16 @@ export function TaskSheet({ task, isOpen, onClose }: TaskSheetProps) {
       }
       setSubtasksLoading(false)
   }
+
+  useEffect(() => {
+      if (task?.id && isOpen) {
+          fetchSubtasks()
+      } else {
+          setSubtasks([])
+          setProposedSubtasks(null)
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [task?.id, isOpen])
 
   const handleAddSubtask = async () => {
       if (!newSubtaskTitle.trim() || !task) return
@@ -425,7 +425,7 @@ export function TaskSheet({ task, isOpen, onClose }: TaskSheetProps) {
 
         {/* Footer: Team Chat */}
         <div className="h-[300px] border-t bg-gray-50">
-            <TeamChat projectId={task.project_id} className="h-full bg-white" />
+            {projectId && <TeamChat projectId={projectId} className="h-full bg-white" />}
         </div>
 
       </SheetContent>
