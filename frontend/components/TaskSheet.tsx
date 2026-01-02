@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Database } from '@/types/database.types'
 import { Button } from '@/components/ui/button'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -17,7 +16,6 @@ import {
     Loader2,
     Plus,
     Trash2,
-    Calendar,
     Flag
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
@@ -72,6 +70,7 @@ export function TaskSheet({ task, isOpen, onClose }: TaskSheetProps) {
           setSubtasks([])
           setProposedSubtasks(null)
       }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [task?.id, isOpen])
 
   const fetchSubtasks = async () => {
