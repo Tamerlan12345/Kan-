@@ -146,9 +146,12 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="container mx-auto py-10">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">{DICTIONARY.projects.title}</h1>
+    <div className="container mx-auto py-8 px-6 lg:px-8 max-w-7xl">
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">{DICTIONARY.projects.title}</h1>
+          <p className="text-sm text-slate-500 mt-1">Управляйте вашими проектами и задачами в одном месте</p>
+        </div>
         <Dialog open={isNewProjectOpen} onOpenChange={setIsNewProjectOpen}>
           <DialogTrigger asChild>
             <Button>
@@ -232,15 +235,15 @@ export default function Dashboard() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {projects.map((project) => (
                     <Link key={project.id} href={`/project/${project.id}`} className="block group">
-                    <div className="border rounded-lg p-6 hover:shadow-lg transition-all bg-card text-card-foreground group-hover:border-primary/50 h-full flex flex-col">
-                        <h3 className="text-xl font-semibold mb-2 group-hover:text-primary transition-colors">{project.name}</h3>
-                        <p className="text-muted-foreground mb-4 line-clamp-2 flex-grow">{project.description}</p>
-                        <div className="flex justify-between items-center text-sm mt-auto pt-4 border-t">
-                        <span className="bg-secondary px-2.5 py-0.5 rounded-full text-xs font-medium capitalize">
+                    <div className="border border-slate-200 rounded-md p-5 hover:shadow-sm transition-all bg-white text-card-foreground group-hover:border-slate-300 h-full flex flex-col">
+                        <h3 className="text-lg font-semibold mb-2 text-slate-900 group-hover:text-primary transition-colors">{project.name}</h3>
+                        <p className="text-slate-500 text-sm mb-4 line-clamp-2 flex-grow leading-relaxed">{project.description}</p>
+                        <div className="flex justify-between items-center text-sm mt-auto pt-4 border-t border-slate-100">
+                        <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md text-xs font-medium capitalize border border-slate-200/50">
                             {DICTIONARY.status[project.project_type as keyof typeof DICTIONARY.status] || project.project_type}
                         </span>
-                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${
-                            project.status === 'active' ? 'text-green-700 bg-green-100' : 'text-gray-700 bg-gray-100'
+                        <span className={`px-2 py-0.5 rounded-md text-xs font-medium capitalize ${
+                            project.status === 'active' ? 'text-emerald-700 bg-emerald-50 border border-emerald-100' : 'text-slate-700 bg-slate-100 border border-slate-200'
                         }`}>
                             {getStatusLabel(project.status)}
                         </span>

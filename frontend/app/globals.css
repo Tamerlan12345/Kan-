@@ -2,78 +2,107 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #f8fafc; /* Slate-50 */
-  --foreground: #0f172a; /* Slate-900 */
-
-  --card: #ffffff;
-  --card-foreground: #0f172a;
-
-  --popover: #ffffff;
-  --popover-foreground: #0f172a;
-
-  --primary: #0f172a;
-  --primary-foreground: #f8fafc;
-
-  --secondary: #f1f5f9; /* Slate-100 */
-  --secondary-foreground: #0f172a;
-
-  --muted: #f1f5f9;
-  --muted-foreground: #64748b; /* Slate-500 */
-
-  --accent: #f1f5f9;
-  --accent-foreground: #0f172a;
-
-  --destructive: #ef4444;
-  --destructive-foreground: #f8fafc;
-
-  --border: #e2e8f0; /* Slate-200 */
-  --input: #e2e8f0;
-  --ring: #0f172a;
-
-  --radius: 0.5rem;
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #020617; /* Slate-950 */
-    --foreground: #f8fafc;
+    /*
+      White background for corporate look
+      --background: 0 0% 100%; (White)
+      --foreground: 222.2 84% 4.9%; (Slate-900)
+    */
+    --background: 0 0% 100%;
+    --foreground: 222.2 47.4% 11.2%;
 
-    --card: #0f172a; /* Slate-900 */
-    --card-foreground: #f8fafc;
+    /*
+      Cards and Popovers also white
+    */
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 47.4% 11.2%;
 
-    --popover: #0f172a; /* Slate-900 */
-    --popover-foreground: #f8fafc;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 47.4% 11.2%;
 
-    --primary: #f8fafc;
-    --primary-foreground: #0f172a;
+    /*
+      Primary: Slate-900 for strict buttons
+    */
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
 
-    --secondary: #1e293b; /* Slate-800 */
-    --secondary-foreground: #f8fafc;
+    /*
+      Secondary: Slate-100 for subtle backgrounds
+    */
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
 
-    --muted: #1e293b;
-    --muted-foreground: #94a3b8;
+    /*
+      Muted: Slate-100 for muted areas
+    */
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%; /* Slate-500 */
 
-    --accent: #1e293b;
-    --accent-foreground: #f8fafc;
+    /*
+      Accent: Slate-100
+    */
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
 
-    --destructive: #7f1d1d;
-    --destructive-foreground: #f8fafc;
+    /*
+      Destructive: Red-500
+    */
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
 
-    --border: #1e293b;
-    --input: #1e293b;
-    --ring: #cbd5e1;
+    /*
+      Border: Slate-200
+    */
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+
+    /*
+      Radius: rounded-md (0.375rem -> ~6px)
+    */
+    --radius: 0.375rem;
+  }
+
+  .dark {
+    /*
+      Dark mode overrides to keep it corporate but dark (Slate-950 base)
+    */
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
   }
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-}
-
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
   }
 }
