@@ -1,13 +1,14 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { MessageCircle, X, Send, Minimize2, Maximize2, Sparkles } from 'lucide-react'
+import { X, Send, Minimize2, Maximize2, Bot } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { supabase } from '@/lib/supabase/client'
 import { toast } from 'sonner'
+import { cn } from '@/lib/utils'
 
 class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
   constructor(props: { children: React.ReactNode }) {
@@ -61,17 +62,13 @@ function AiChatWidgetContent() {
     { role: 'assistant', content: 'Привет! Я ваш AI ассистент. Спрашивайте о проектах и задачах.' }
   ])
   const [isLoading, setIsLoading] = useState(false)
-  // Removed viewportRef since we can't easily attach it to shadcn ScrollArea without modifying it
-  // and we have a fallback using last-message id
 
   const scrollToBottom = () => {
-      // Fallback: use the id of the last message
       const last = document.getElementById('last-message');
       if (last) last.scrollIntoView({ behavior: 'smooth' });
   }
 
   useEffect(() => {
-    // Small delay to allow DOM to update
     const timeout = setTimeout(scrollToBottom, 100);
     return () => clearTimeout(timeout);
   }, [messages, isLoading, isOpen, isMinimized]);
@@ -131,65 +128,75 @@ function AiChatWidgetContent() {
   if (!isOpen) {
     return (
       <Button
-        className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg z-50 transition-transform hover:scale-110"
+        className="fixed bottom-6 right-6 h-12 w-12 rounded-full shadow-lg p-0 bg-slate-900 hover:bg-slate-800 text-white border-2 border-white"
         onClick={() => setIsOpen(true)}
       >
-        <MessageCircle className="h-6 w-6" />
+        <Bot className="h-6 w-6" />
       </Button>
     )
   }
 
   return (
-    <div className={`fixed right-6 z-50 bg-background shadow-xl rounded-lg border transition-all duration-300 ease-in-out flex flex-col overflow-hidden ${isMinimized ? 'bottom-6 h-14 w-72' : 'bottom-6 w-[90vw] md:w-96 h-[80vh] md:h-[600px]'}`}>
-      <div className="flex items-center justify-between p-3 border-b bg-primary text-primary-foreground cursor-pointer shrink-0" onClick={() => !isMinimized && setIsMinimized(!isMinimized)}>
+    <div className={`fixed right-6 z-50 bg-white shadow-xl rounded-lg border border-slate-200 transition-all duration-300 ease-in-out flex flex-col overflow-hidden ring-1 ring-black/5 ${isMinimized ? 'bottom-6 h-12 w-72' : 'bottom-6 w-[90vw] md:w-96 h-[80vh] md:h-[600px]'}`}>
+      <div
+        className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-slate-50/50 cursor-pointer shrink-0"
+        onClick={() => !isMinimized && setIsMinimized(!isMinimized)}
+      >
         <div className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4" />
-            <span className="font-medium">AI Assistant</span>
+            <div className="h-6 w-6 rounded bg-indigo-100 flex items-center justify-center text-indigo-600">
+                <Bot className="h-4 w-4" />
+            </div>
+            <span className="font-semibold text-sm text-slate-900">AI Assistant</span>
         </div>
         <div className="flex gap-1">
-            <Button variant="ghost" size="icon" className="h-6 w-6 text-primary-foreground hover:bg-primary/80" onClick={(e) => { e.stopPropagation(); setIsMinimized(!isMinimized) }}>
+            <Button variant="ghost" size="icon" className="h-6 w-6 text-slate-400 hover:text-slate-600 hover:bg-slate-100" onClick={(e) => { e.stopPropagation(); setIsMinimized(!isMinimized) }}>
                 {isMinimized ? <Maximize2 className="h-4 w-4" /> : <Minimize2 className="h-4 w-4" />}
             </Button>
-            <Button variant="ghost" size="icon" className="h-6 w-6 text-primary-foreground hover:bg-primary/80" onClick={(e) => { e.stopPropagation(); setIsOpen(false) }}>
+            <Button variant="ghost" size="icon" className="h-6 w-6 text-slate-400 hover:text-slate-600 hover:bg-slate-100" onClick={(e) => { e.stopPropagation(); setIsOpen(false) }}>
                 <X className="h-4 w-4" />
             </Button>
         </div>
       </div>
 
       {!isMinimized && (
-        <div className="flex flex-col flex-1 bg-background">
+        <div className="flex flex-col flex-1 bg-white">
             <ScrollArea className="flex-1 p-4">
                 <div className="space-y-4 pb-4">
                     {messages.map((m, i) => (
                         <div key={i} id={i === messages.length - 1 ? "last-message" : undefined} className={`flex gap-2 ${m.role === 'user' ? 'flex-row-reverse' : ''}`}>
-                             <Avatar className="h-8 w-8 border border-border">
-                                <AvatarFallback className="text-xs">{m.role === 'user' ? 'Вы' : 'AI'}</AvatarFallback>
+                             <Avatar className="h-8 w-8 border border-slate-100">
+                                <AvatarFallback className="text-xs bg-slate-50 text-slate-600">{m.role === 'user' ? 'Вы' : 'AI'}</AvatarFallback>
                              </Avatar>
-                             <div className={`rounded-lg p-3 text-sm max-w-[85%] break-words ${m.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground'}`}>
+                             <div className={cn(
+                                "rounded-lg p-3 text-sm max-w-[85%] break-words shadow-sm",
+                                m.role === 'user'
+                                    ? "bg-slate-900 text-white"
+                                    : "bg-slate-50 text-slate-700 border border-slate-100"
+                             )}>
                                  {m.content}
                              </div>
                         </div>
                     ))}
                     {isLoading && (
                         <div className="flex gap-2">
-                            <Avatar className="h-8 w-8 border border-border"><AvatarFallback className="text-xs">AI</AvatarFallback></Avatar>
-                            <div className="bg-muted rounded-lg p-4 flex items-center">
+                            <Avatar className="h-8 w-8 border border-slate-100"><AvatarFallback className="text-xs bg-slate-50 text-slate-600">AI</AvatarFallback></Avatar>
+                            <div className="bg-slate-50 border border-slate-100 rounded-lg p-4 flex items-center">
                                 <TypingIndicator />
                             </div>
                         </div>
                     )}
                 </div>
             </ScrollArea>
-            <div className="p-3 border-t bg-background shrink-0">
+            <div className="p-3 border-t border-slate-100 bg-slate-50/30 shrink-0">
                 <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); handleSend(); }}>
                     <Input
                         value={input}
                         onChange={e => setInput(e.target.value)}
                         placeholder="Задайте вопрос..."
-                        className="flex-1"
+                        className="flex-1 bg-white border-slate-200"
                         disabled={isLoading}
                     />
-                    <Button type="submit" size="icon" disabled={isLoading || !input.trim()}>
+                    <Button type="submit" size="icon" disabled={isLoading || !input.trim()} className="bg-slate-900 hover:bg-slate-800 text-white shrink-0">
                         <Send className="h-4 w-4" />
                     </Button>
                 </form>
