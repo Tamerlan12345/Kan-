@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { GoogleGenerativeAI } from "https://esm.sh/@google/generative-ai@0.1.3"
+// Обновляем версию SDK до более новой, так как 0.1.3 может быть недоступна или сломана
+import { GoogleGenerativeAI } from "https://esm.sh/@google/generative-ai@0.12.0"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -8,17 +9,28 @@ const corsHeaders = {
 }
 
 Deno.serve(async (req) => {
-  // 1. Обработка Preflight (OPTIONS) - самое важное для CORS
+  // 1. Обработка Preflight (OPTIONS)
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    // Получаем тело запроса
-    const { taskTitle, taskDescription, mode, assistantType, input } = await req.json()
+    // Проверка ключа API перед всем остальным
     const apiKey = Deno.env.get('GEMINI_API_KEY')
+    if (!apiKey) {
+      throw new Error('GEMINI_API_KEY is not set on server')
+    }
 
-    if (!apiKey) throw new Error('GEMINI_API_KEY is not set')
+    // Получаем тело запроса
+    // Добавляем проверку на пустой body, чтобы избежать краша
+    let body;
+    try {
+        body = await req.json()
+    } catch (e) {
+        throw new Error('Invalid request body')
+    }
+
+    const { assistantType, input } = body
 
     const genAI = new GoogleGenerativeAI(apiKey)
     const model = genAI.getGenerativeModel({ model: "gemini-pro" })
@@ -27,7 +39,6 @@ Deno.serve(async (req) => {
 
     // Логика формирования промпта
     if (assistantType === 'task_decomposer') {
-        // Парсим входные данные, если они пришли строкой
         const data = typeof input === 'string' ? JSON.parse(input) : input;
         prompt = `
         Act as a Senior Project Manager. Decompose this task into 3-5 subtasks.
@@ -45,18 +56,17 @@ Deno.serve(async (req) => {
          prompt = `Estimate hours for task: "${data.title}". Return valid JSON: {"estimated_hours": 5.5}`
     } else {
         // Fallback for chat
-        prompt = `Context: ${input}. Answer briefly.`
+        prompt = `Context: ${input}. Answer briefly in Russian language.`
     }
 
     const result = await model.generateContent(prompt)
     const response = await result.response
     const text = response.text()
 
-    // Очистка от markdown (```json ... ```), если модель все же добавила их
     const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
 
     return new Response(
-      JSON.stringify({ response: cleanText }), // Возвращаем как response, чтобы клиент понимал
+      JSON.stringify({ response: cleanText }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200
@@ -64,11 +74,12 @@ Deno.serve(async (req) => {
     )
 
   } catch (error) {
+    console.error("Function error:", error.message)
     return new Response(
       JSON.stringify({ error: error.message }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400 // Лучше 400 или 500, но с заголовками
+        status: 400
       }
     )
   }
