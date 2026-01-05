@@ -34,13 +34,6 @@ interface TaskSheetProps {
   projectId: string | null
 }
 
-interface ProposedSubtask {
-    title: string
-    description: string
-    estimated_hours: number
-    selected: boolean
-}
-
 interface Subtask {
     id: string
     title: string
@@ -62,7 +55,7 @@ export function TaskSheet({ task, isOpen, onClose, projectId }: TaskSheetProps) 
 
   // Task Decomposition State
   const [isDecomposing, setIsDecomposing] = useState(false)
-  const [proposedSubtasks, setProposedSubtasks] = useState<ProposedSubtask[] | null>(null)
+  // const [proposedSubtasks, setProposedSubtasks] = useState<ProposedSubtask[] | null>(null) // REMOVED
 
   const fetchSubtasks = async () => {
       if (!task) return
@@ -86,9 +79,36 @@ export function TaskSheet({ task, isOpen, onClose, projectId }: TaskSheetProps) 
   useEffect(() => {
       if (task?.id && isOpen) {
           fetchSubtasks()
+
+          // Subscribe to changes
+          const channel = supabase
+              .channel(`subtasks-${task.id}`)
+              .on(
+                  'postgres_changes',
+                  {
+                      event: '*',
+                      schema: 'app_tasks',
+                      table: 'subtasks',
+                      filter: `task_id=eq.${task.id}`
+                  },
+                  (payload) => {
+                      if (payload.eventType === 'INSERT') {
+                          fetchSubtasks()
+                          toast.success("Новая подзадача добавлена!")
+                      } else {
+                          fetchSubtasks()
+                      }
+                  }
+              )
+              .subscribe()
+
+          return () => {
+              supabase.removeChannel(channel)
+          }
+
       } else {
           setSubtasks([])
-          setProposedSubtasks(null)
+          // setProposedSubtasks(null)
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [task?.id, isOpen])
@@ -153,78 +173,37 @@ export function TaskSheet({ task, isOpen, onClose, projectId }: TaskSheetProps) 
   const handleDecomposeTask = async () => {
       if (!task) return
       setIsDecomposing(true)
+
+      // Async UI: "Fire and forget" from UI perspective
       try {
         const { data: { session } } = await supabase.auth.getSession()
 
-        const response = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/ai-assistant`, {
+        // Use anon key if token missing, or just send what we have.
+        // We do NOT wait for the full response logic.
+        fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/ai-assistant`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${session?.access_token}`
+                'Authorization': `Bearer ${session?.access_token || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+                'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? ''
             },
             body: JSON.stringify({
                 assistantType: 'task_decomposer',
                 input: JSON.stringify({
+                    taskId: task.id,
                     title: task.title,
                     description: task.description || ''
                 })
             })
-        })
+        }).catch(err => console.error("Trigger error:", err))
 
-        const result = await response.json()
-
-        let jsonStr = result.response
-        jsonStr = jsonStr.replace(/```json\n?|\n?```/g, '')
-
-        const subtasksData = JSON.parse(jsonStr)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const tasksArray = Array.isArray(subtasksData) ? subtasksData : (subtasksData.subtasks || [])
-
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        setProposedSubtasks(tasksArray.map((t: any) => ({ ...t, selected: true })))
-        toast.success("Задача декомпозирована!")
+        toast.success("ИИ начал декомпозицию, задачи скоро появятся")
 
       } catch (error) {
-          console.error("Decomposition error:", error)
-          toast.error("Не удалось декомпозировать задачу")
+          console.error("Decomposition trigger error:", error)
+          toast.error("Ошибка запуска ИИ")
       } finally {
           setIsDecomposing(false)
-      }
-  }
-
-  const handleUpdateProposedTask = (index: number, field: keyof ProposedSubtask, value: string | number | boolean) => {
-      if (!proposedSubtasks) return
-      const updated = [...proposedSubtasks]
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const item = { ...updated[index] } as any
-      item[field] = value
-      updated[index] = item
-      setProposedSubtasks(updated)
-  }
-
-  const handleAcceptSubtasks = async () => {
-      if (!proposedSubtasks || !task) return
-
-      const selectedTasks = proposedSubtasks.filter(t => t.selected)
-      if (selectedTasks.length === 0) return
-
-      // Insert into subtasks table instead of creating new tasks
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const inserts = selectedTasks.map((st: any) => ({
-          task_id: task.id,
-          title: st.title,
-          is_completed: false
-      }))
-
-      const { error } = await supabase.schema('app_tasks').from('subtasks').insert(inserts)
-
-      if (error) {
-          console.error(error)
-          toast.error("Не удалось создать подзадачи")
-      } else {
-          setProposedSubtasks(null)
-          fetchSubtasks()
-          toast.success(`Добавлено ${inserts.length} подзадач`)
       }
   }
 
@@ -387,36 +366,6 @@ export function TaskSheet({ task, isOpen, onClose, projectId }: TaskSheetProps) 
                             </div>
                         )}
 
-                        {/* Proposed Subtasks UI */}
-                        {proposedSubtasks && (
-                            <div className="mt-4 rounded-lg border bg-white p-3 shadow-sm animate-in fade-in slide-in-from-top-2">
-                                <h4 className="mb-2 text-sm font-medium">Предложенные подзадачи</h4>
-                                <ul className="space-y-2 max-h-[200px] overflow-y-auto pr-1">
-                                    {proposedSubtasks.map((st, idx) => (
-                                        <li key={idx} className="flex items-start gap-3 border-b border-gray-100 pb-2 last:border-0 last:pb-0">
-                                            <Checkbox
-                                                checked={st.selected}
-                                                onCheckedChange={(c) => handleUpdateProposedTask(idx, 'selected', !!c)}
-                                                className="mt-1.5"
-                                            />
-                                            <div className="flex-1">
-                                                <Input
-                                                    value={st.title}
-                                                    onChange={e => handleUpdateProposedTask(idx, 'title', e.target.value)}
-                                                    className="h-8 text-sm border-transparent hover:border-input focus:border-input px-0"
-                                                />
-                                            </div>
-                                        </li>
-                                    ))}
-                                </ul>
-                                <div className="mt-4 flex justify-end gap-2 pt-2 border-t">
-                                    <Button variant="ghost" size="sm" onClick={() => setProposedSubtasks(null)}>Отмена</Button>
-                                    <Button size="sm" onClick={handleAcceptSubtasks}>
-                                        Добавить выбранные ({proposedSubtasks.filter(t => t.selected).length})
-                                    </Button>
-                                </div>
-                            </div>
-                        )}
                     </div>
                  )}
 
