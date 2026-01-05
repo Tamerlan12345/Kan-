@@ -1,6 +1,4 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-// Обновляем версию SDK до более новой, так как 0.1.3 может быть недоступна или сломана
-import { GoogleGenerativeAI } from "https://esm.sh/@google/generative-ai@0.12.0"
+import { GoogleGenerativeAI } from "https://esm.sh/@google/generative-ai@0.24.0"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -9,35 +7,57 @@ const corsHeaders = {
 }
 
 Deno.serve(async (req) => {
-  // 1. Обработка Preflight (OPTIONS)
+  // 1. Handle Preflight (OPTIONS)
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response('ok', { headers: corsHeaders, status: 200 })
   }
 
   try {
-    // Проверка ключа API перед всем остальным
+    // Check API Key
     const apiKey = Deno.env.get('GEMINI_API_KEY')
     if (!apiKey) {
-      throw new Error('GEMINI_API_KEY is not set on server')
+      console.error('GEMINI_API_KEY is not set')
+      return new Response(
+        JSON.stringify({ error: 'Server configuration error: GEMINI_API_KEY not set' }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 500
+        }
+      )
     }
 
-    // Получаем тело запроса
-    // Добавляем проверку на пустой body, чтобы избежать краша
+    // 2. Parse Body safely
     let body;
     try {
         body = await req.json()
     } catch (e) {
-        throw new Error('Invalid request body')
+        return new Response(
+          JSON.stringify({ error: 'Invalid request body: must be valid JSON' }),
+          {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 400
+          }
+        )
     }
 
     const { assistantType, input } = body
+
+    if (!assistantType || !input) {
+         return new Response(
+          JSON.stringify({ error: 'Missing assistantType or input' }),
+          {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 400
+          }
+        )
+    }
 
     const genAI = new GoogleGenerativeAI(apiKey)
     const model = genAI.getGenerativeModel({ model: "gemini-pro" })
 
     let prompt = ''
 
-    // Логика формирования промпта
+    // Logic for prompt generation
     if (assistantType === 'task_decomposer') {
         const data = typeof input === 'string' ? JSON.parse(input) : input;
         prompt = `
@@ -79,7 +99,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ error: error.message }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400
+        status: 500
       }
     )
   }
