@@ -54,7 +54,17 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  const { data: { session } } = await supabase.auth.getSession()
+  const { data: { session }, error } = await supabase.auth.getSession()
+
+  // Handle Auth Session Error (e.g. Invalid Refresh Token)
+  if (error) {
+    await supabase.auth.signOut()
+    if (!request.nextUrl.pathname.startsWith('/login')) {
+      const redirectUrl = request.nextUrl.clone()
+      redirectUrl.pathname = '/login'
+      return NextResponse.redirect(redirectUrl)
+    }
+  }
 
   // Protect routes starting with /dashboard and /project
   if (!session && (request.nextUrl.pathname.startsWith('/dashboard') || request.nextUrl.pathname.startsWith('/project'))) {
