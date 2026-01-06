@@ -8,55 +8,26 @@ const corsHeaders = {
 }
 
 Deno.serve(async (req) => {
-  // 1. Handle Preflight (OPTIONS)
+  // 1. Immediate OPTIONS handling
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders, status: 200 })
+    return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    // Check API Key
+    // 2. Get key from server environment
     const apiKey = Deno.env.get('GEMINI_API_KEY')
-    if (!apiKey) {
-      console.error('GEMINI_API_KEY is not set')
-      return new Response(
-        JSON.stringify({ error: 'Server configuration error: GEMINI_API_KEY not set' }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 500
-        }
-      )
-    }
+    if (!apiKey) throw new Error('GEMINI_API_KEY not set')
 
-    // 2. Parse Body safely
-    let body;
-    try {
-        body = await req.json()
-    } catch (e) {
-        return new Response(
-          JSON.stringify({ error: 'Invalid request body: must be valid JSON' }),
-          {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 400
-          }
-        )
-    }
-
-    const { assistantType, input } = body
+    // 3. Logic handling
+    const { assistantType, input } = await req.json()
 
     if (!assistantType || !input) {
-         return new Response(
-          JSON.stringify({ error: 'Missing assistantType or input' }),
-          {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 400
-          }
-        )
+       throw new Error('Missing assistantType or input')
     }
 
     const genAI = new GoogleGenerativeAI(apiKey)
     const model = genAI.getGenerativeModel({ model: "gemini-pro" })
 
-    // Logic for prompt generation
     if (assistantType === 'task_decomposer') {
         const data = typeof input === 'string' ? JSON.parse(input) : input;
         const prompt = `
@@ -78,19 +49,8 @@ Deno.serve(async (req) => {
 
         // Parse the response
         let subtasks = [];
-        try {
-            const parsed = JSON.parse(cleanText);
-            subtasks = Array.isArray(parsed) ? parsed : (parsed.subtasks || []);
-        } catch (e) {
-            console.error("JSON Parse error:", e);
-             return new Response(
-              JSON.stringify({ error: 'Failed to parse AI response' }),
-              {
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-                status: 500
-              }
-            )
-        }
+        const parsed = JSON.parse(cleanText);
+        subtasks = Array.isArray(parsed) ? parsed : (parsed.subtasks || []);
 
         // Insert into DB if taskId is present
         if (data.taskId && subtasks.length > 0) {
@@ -112,14 +72,7 @@ Deno.serve(async (req) => {
                 .insert(inserts)
 
             if (insertError) {
-                console.error("Insert error:", insertError)
-                return new Response(
-                  JSON.stringify({ error: 'Database insert failed: ' + insertError.message }),
-                  {
-                    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-                    status: 500
-                  }
-                )
+                throw new Error('Database insert failed: ' + insertError.message)
             }
         }
 
@@ -132,7 +85,6 @@ Deno.serve(async (req) => {
         )
     }
 
-    // Other types
     let prompt = ''
     if (assistantType === 'predictive_estimator') {
          const data = typeof input === 'string' ? JSON.parse(input) : input;
@@ -145,7 +97,6 @@ Deno.serve(async (req) => {
     const result = await model.generateContent(prompt)
     const response = await result.response
     const text = response.text()
-
     const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
 
     return new Response(
@@ -157,13 +108,9 @@ Deno.serve(async (req) => {
     )
 
   } catch (error) {
-    console.error("Function error:", error.message)
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500
-      }
-    )
+    return new Response(JSON.stringify({ error: error.message }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 400
+    })
   }
 })
