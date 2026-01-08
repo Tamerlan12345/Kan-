@@ -85,13 +85,12 @@ function AiChatWidgetContent() {
     setIsLoading(true)
 
     try {
-      const { data: { session } } = await supabase.auth.getSession()
-
-      const response = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/ai-assistant`, {
+      // Proxy request through Next.js API route to avoid CORS and handle auth securely
+      const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session?.access_token}`
+            // Authorization header is handled by the server-side proxy using cookies
         },
         body: JSON.stringify({
             assistantType: 'business_analyst',
