@@ -85,6 +85,7 @@ function AiChatWidgetContent() {
 
     try {
       // Proxy request through Next.js API route to avoid CORS and handle auth securely
+      // Verified: API path is absolute to prevent relative path errors
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
