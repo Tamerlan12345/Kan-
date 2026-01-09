@@ -29,7 +29,7 @@ Deno.serve(async (req) => {
     }
 
     const genAI = new GoogleGenerativeAI(apiKey)
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" })
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" })
 
     if (assistantType === 'task_decomposer') {
         const data = typeof input === 'string' ? JSON.parse(input) : input;
