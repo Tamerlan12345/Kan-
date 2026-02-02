@@ -176,16 +176,12 @@ export function TaskSheet({ task, isOpen, onClose, projectId }: TaskSheetProps) 
 
       // Async UI: "Fire and forget" from UI perspective
       try {
-        const { data: { session } } = await supabase.auth.getSession()
-
-        // Use anon key if token missing, or just send what we have.
+        // Use proxy to avoid CORS and handle auth securely
         // We do NOT wait for the full response logic.
-        fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/ai-assistant`, {
+        fetch('/api/chat', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${session?.access_token || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
-                'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? ''
             },
             body: JSON.stringify({
                 assistantType: 'task_decomposer',
