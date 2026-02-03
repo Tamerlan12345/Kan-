@@ -1,5 +1,7 @@
 'use client'
 
+// Version: Fix CORS deploy
+
 import React, { useState, useEffect } from 'react'
 import { X, Send, Minimize2, Maximize2, Bot } from 'lucide-react'
 import { Button } from '@/components/ui/button'
