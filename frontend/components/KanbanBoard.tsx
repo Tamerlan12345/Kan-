@@ -14,7 +14,7 @@ import {
   DragOverEvent,
 } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import KanbanColumn from './KanbanColumn';
 import TaskCard from './TaskCard';
 import { TaskSheet } from './TaskSheet';
@@ -270,11 +270,11 @@ export default function KanbanBoard({ boardId }: KanbanBoardProps) {
     }
   };
 
-  const handleTaskClick = (task: Task) => {
+  const handleTaskClick = useCallback((task: Task) => {
       setSelectedTask(task);
-  }
+  }, []);
 
-  const handleMoveTask = async (taskId: string, targetColumnId: string) => {
+  const handleMoveTask = useCallback(async (taskId: string, targetColumnId: string) => {
       // Manual move via menu (for mobile)
       const task = tasks.find(t => t.id === taskId);
       if (!task) return;
@@ -297,7 +297,18 @@ export default function KanbanBoard({ boardId }: KanbanBoardProps) {
           toast.error("Failed to move task");
           setTasks(previousTasks);
       }
-  }
+  }, [tasks]);
+
+  const tasksByColumn = useMemo(() => {
+    const groups: Record<string, Task[]> = {};
+    columns.forEach(col => { groups[col.id] = []; });
+    tasks.forEach(task => {
+        if (task.column_id && groups[task.column_id]) {
+            groups[task.column_id].push(task);
+        }
+    });
+    return groups;
+  }, [tasks, columns]);
 
   return (
     <>
@@ -328,7 +339,7 @@ export default function KanbanBoard({ boardId }: KanbanBoardProps) {
                             <KanbanColumn
                                 id={col.id}
                                 title={getStatusLabel(col.name)}
-                                tasks={tasks.filter((task) => task.column_id === col.id)}
+                                tasks={tasksByColumn[col.id] || []}
                                 onTaskClick={handleTaskClick}
                                 onMoveTask={handleMoveTask}
                             />
@@ -345,7 +356,7 @@ export default function KanbanBoard({ boardId }: KanbanBoardProps) {
                 <KanbanColumn
                     id={col.id}
                     title={getStatusLabel(col.name)}
-                    tasks={tasks.filter((task) => task.column_id === col.id)}
+                    tasks={tasksByColumn[col.id] || []}
                     onTaskClick={handleTaskClick}
                     onMoveTask={handleMoveTask}
                 />

@@ -11,6 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { memo } from 'react';
 
 type Task = Database['app_tasks']['Tables']['tasks']['Row'] & {
     assigned_to_user?: Database['app_auth']['Tables']['users']['Row']
@@ -18,12 +19,12 @@ type Task = Database['app_tasks']['Tables']['tasks']['Row'] & {
 
 interface TaskCardProps {
   task: Task;
-  onClick?: () => void;
+  onTaskClick?: (task: Task) => void;
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onMove?: (taskId: string, targetColumnId: string) => void;
 }
 
-export default function TaskCard({ task, onClick, onMove }: TaskCardProps) {
+function TaskCard({ task, onTaskClick, onMove }: TaskCardProps) {
   const {
     attributes,
     listeners,
@@ -65,7 +66,7 @@ export default function TaskCard({ task, onClick, onMove }: TaskCardProps) {
       style={style}
       {...attributes}
       {...listeners}
-      onClick={onClick}
+      onClick={() => onTaskClick?.(task)}
       className={`group relative cursor-grab active:cursor-grabbing rounded-lg bg-card p-3 shadow-sm hover:shadow-md transition-all border border-l-4 ${priorityConfig.color} ${isRisk ? 'border-red-200 bg-red-50/50' : 'border-border/50'} overflow-hidden`}
     >
       <div className="space-y-2">
@@ -177,3 +178,5 @@ export default function TaskCard({ task, onClick, onMove }: TaskCardProps) {
     </div>
   );
 }
+
+export default memo(TaskCard);

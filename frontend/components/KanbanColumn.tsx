@@ -8,6 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { DICTIONARY } from '@/lib/dictionaries';
 import { toast } from 'sonner';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { memo } from 'react';
 
 type Task = Database['app_tasks']['Tables']['tasks']['Row'] & {
     assigned_to_user?: Database['app_auth']['Tables']['users']['Row']
@@ -37,7 +38,7 @@ const WIP_LIMITS: Record<string, number> = {
     'done': 100
 }
 
-export default function KanbanColumn({ id, title, tasks, onTaskClick, onMoveTask }: KanbanColumnProps) {
+function KanbanColumn({ id, title, tasks, onTaskClick, onMoveTask }: KanbanColumnProps) {
   const { setNodeRef } = useDroppable({
     id: id,
   });
@@ -107,7 +108,7 @@ export default function KanbanColumn({ id, title, tasks, onTaskClick, onMoveTask
                 <TaskCard
                     key={task.id}
                     task={task}
-                    onClick={() => onTaskClick?.(task)}
+                    onTaskClick={onTaskClick}
                     onMove={onMoveTask}
                 />
             ))}
@@ -124,3 +125,5 @@ export default function KanbanColumn({ id, title, tasks, onTaskClick, onMoveTask
     </div>
   );
 }
+
+export default memo(KanbanColumn);
